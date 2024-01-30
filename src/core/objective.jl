@@ -1,6 +1,14 @@
 # introduce the new objective function following the formulations of Prof. Bichler
-function objective_max_welfare(pm::AbstractPowerModel; kwargs...)
-    
+function objective_max_welfare(pm::AbstractPowerModel;  kwargs...)
+
+    objective_function= sum(
+                            sum(sum( var(pm, n, :x_bl)[b, l]* nw_ref[:load][b]["cblocks"][l]["c"] for (l, bid) in nw_ref[:load][b]["cblocks"]) for (b, load) in nw_ref[:load]) -
+                            sum(sum( var(pm, n, :y_sl)[s, l]* nw_ref[:gen][s]["cblocks"][l]["c"] for (l, bid) in nw_ref[:gen][s]["cblocks"]) for (s, gen) in nw_ref[:gen]) -
+                            sum(var(pm, n, :u_s)[s]* nw_ref[:gen][s]["oncost"] for (s, gen) in nw_ref[:gen]) 
+                        for (n, nw_ref) in nws(pm))
+
+
+    return JuMP.@objective(pm.model, Max, objective_function)
 end
 
 ""

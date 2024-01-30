@@ -46,6 +46,7 @@ Creates Ohms constraints (yt post fix indicates that Y and T values are in recta
 p[f_idx] == -b*(t[f_bus] - t[t_bus])
 ```
 """
+# looks like constraint 12
 function constraint_ohms_yt_from(pm::AbstractDCPModel, n::Int, f_bus, t_bus, f_idx, t_idx, g, b, g_fr, b_fr, tr, ti, tm)
     p_fr  = var(pm, n,  :p, f_idx)
     va_fr = var(pm, n, :va, f_bus)

@@ -1,12 +1,12 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel)
     variable_bus_voltage(pm)
-    variable_consumption_generation(pm) #add x_b, x_bl, y_s, y_sl variables
-    variable_commited(pm) #add u_s variables
-    variable_branch_power(pm)
+    variable_consumption_generation(pm)     #   add x_b, x_bl, y_s, y_sl variables
+    variable_commited(pm)                   #   add u_s variables
+    variable_branch_power(pm)               #   defines variables p_f, p_t, q_f, q_t (p_f = f_vw, p_t = f_wv)
     
-
-    objective_min_fuel_and_flow_cost(pm)
+    
+    objective_max_welfare(pm)               #   objective function of Bichlers formulations - maximize welfare
 
     constraint_model_voltage(pm)
 

@@ -4,6 +4,9 @@
 # for branches flows and bus flow conservation
 ###############################################################################
 
+#add constraints for the formulation of Prof. Bichler
+function constraint_
+
 "checks if a sufficient number of variables exist for the given keys collection"
 function _check_var_keys(vars, keys, var_name, comp_name)
     if length(vars) < length(keys)
