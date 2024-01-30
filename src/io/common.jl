@@ -8,7 +8,7 @@ function parse_file(raw::String, json::String; import_all=false, validate=true)
     json_data = parse_file(json; import_all=import_all, validate=false)
     #merge the two data structures
     
-    merged_data = merge_data(raw_data, json_data)
+    return merge_data(raw_data, json_data)
 
 
 end
@@ -44,7 +44,7 @@ function merge_data(raw_data::Dict{String, Any}, json_data::Dict{String, Any})
     end
 
 
-    return merged_data
+    return raw_data
 end
 
 #helper function to make the array of dictionaries to a dictionary structure - its makes it easier later on to access the data
