@@ -1,3 +1,8 @@
+# introduce the new objective function following the formulations of Prof. Bichler
+function objective_max_welfare(pm::AbstractPowerModel; kwargs...)
+    
+end
+
 ""
 function objective_min_fuel_and_flow_cost(pm::AbstractPowerModel; kwargs...)
     expression_pg_cost(pm; kwargs...)
