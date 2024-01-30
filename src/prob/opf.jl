@@ -2,9 +2,9 @@
 function build_opf_bichler(pm::AbstractPowerModel)
     variable_bus_voltage(pm)
     variable_consumption_generation(pm) #add x_b, x_bl, y_s, y_sl variables
-    variable_gen_power(pm)
+    variable_commited(pm) #add u_s variables
     variable_branch_power(pm)
-    variable_dcline_power(pm)
+    
 
     objective_min_fuel_and_flow_cost(pm)
 
