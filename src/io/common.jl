@@ -1,3 +1,65 @@
+#add my parsing function to receive data from .raw and .json format
+function parse_file(raw::String, json::String; import_all=false, validate=true)
+    
+    #parse the raw data
+    raw_data = parse_file(raw; import_all=import_all, validate=validate)
+
+    #parse the json data
+    json_data = parse_file(json; import_all=import_all, validate=false)
+    #merge the two data structures
+    
+    merged_data = merge_data(raw_data, json_data)
+
+
+end
+
+#helper function to merge the data fro json and raw file
+function merge_data(raw_data::Dict{String, Any}, json_data::Dict{String, Any})
+
+    #create a new dictionary to store the merged data
+    merged_data = Dict{String, Any}()
+
+    #merge the loads' data in json file with the loads' data in raw file
+    for i in keys(raw_data["load"])
+        for j in keys(json_data["loads"])
+            if raw_data["load"][i]["source_id"][2] == json_data["loads"][j]["bus"] && raw_data["load"][i]["source_id"][3] == json_data["loads"][j]["id"]
+                merged_data = merge(raw_data["load"][i], json_data["loads"][j])
+                cblocks_dict = make_dict(json_data["loads"][j]["cblocks"])
+                merged_data["cblocks"] = cblocks_dict
+                raw_data["load"][i] = merged_data
+            end
+        end
+    end
+
+    #merge the generators' data in json file with the generators' data in raw file
+    for i in keys(raw_data["gen"])
+        for j in keys(json_data["generators"])
+            if raw_data["gen"][i]["source_id"][2] == json_data["generators"][j]["bus"] && raw_data["gen"][i]["source_id"][3] == json_data["generators"][j]["id"]
+                merged_data = merge(raw_data["gen"][i], json_data["generators"][j])
+                cblocks_dict = make_dict(json_data["generators"][j]["cblocks"])
+                merged_data["cblocks"] = cblocks_dict
+                raw_data["gen"][i] = merged_data
+            end
+        end
+    end
+
+
+    return merged_data
+end
+
+#helper function to make the array of dictionaries to a dictionary structure - its makes it easier later on to access the data
+function make_dict(data::Array{Any, 1})
+    # initiate new dictionary
+    dict_from_array = Dict{Int, Dict{String, Any}}()
+
+    # add every dictionary from the array to the new dictionary with its index as the key   
+    for (index, dict) in enumerate(data)
+        dict_from_array[index] = dict
+    end
+    return dict_from_array
+end
+
+
 """
     parse_file(file; import_all)
 
