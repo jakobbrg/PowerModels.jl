@@ -5,7 +5,46 @@
 ###############################################################################
 
 #add constraints for the formulation of Prof. Bichler
-function constraint_
+function constraint_13(pm::AbstractPowerModel, bus_id::Int, nw::Int=nw_id_default)
+    # access variables
+    y_s = var(pm, nw, :y_s)
+    x_b = var(pm, nw, :x_b)
+    p = var(pm,nw, :p)
+
+    from_bus = bus_id
+
+    branch_array_from_bus = []
+    for i in ids(pm, nw, :branch)
+        if ref(pm, nw, :branch)[i]["f_bus"] == from_bus
+            push!(branch_array_from_bus, ref(pm, nw, :branch)[i])
+        end
+    end
+
+    # find all arc tupels
+    from_tupels = []
+    to_tupels = []
+    for branch in branch_array_from_bus
+        push!(from_tupels, (branch["index"], branch["f_bus"], branch["t_bus"]))
+        push!(to_tupels, (branch["index"], branch["t_bus"], branch["f_bus"]))
+    end
+
+    # find all generators at f_bus
+    sum_generation = sum(y_s[s] for s in ref(pm, nw, :bus_gens, from_bus))
+    sum_consumption = sum(x_b[b] for b in ref(pm, nw, :bus_loads, from_bus))
+
+    p_from_sum = sum(p[tupel] for tupel in from_tupels)
+    p_to_sum = sum(p[tupel] for tupel in to_tupels)
+
+    # add constraints
+    for (i, f, t) in from_tupels
+        JuMP.@constraint(pm.model, p[i, f, t] == p[i, t, f])     #   make sure that the varaibles, which mean the same also receive the same value!
+    end
+
+    JuMP.@constraint(pm.model, sum_generation - sum_consumption - p_from_sum == 0)
+    JuMP.@constraint(pm.model, sum_generation - sum_consumption - p_to_sum == 0)
+
+ 
+end
 
 "checks if a sufficient number of variables exist for the given keys collection"
 function _check_var_keys(vars, keys, var_name, comp_name)

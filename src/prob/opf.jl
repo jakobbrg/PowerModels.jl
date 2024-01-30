@@ -4,6 +4,7 @@ function build_opf_bichler(pm::AbstractPowerModel)
     variable_consumption_generation(pm)     #   add x_b, x_bl, y_s, y_sl variables
     variable_commited(pm)                   #   add u_s variables
     variable_branch_power(pm)               #   defines variables p_f, p_t, q_f, q_t (p_f = f_vw, p_t = f_wv)
+    variable_gen_power(pm)
     
     
     objective_max_welfare(pm)               #   objective function of Bichlers formulations - maximize welfare
@@ -16,11 +17,12 @@ function build_opf_bichler(pm::AbstractPowerModel)
 
     for i in ids(pm, :bus)
         constraint_power_balance(pm, i)
+        constraint_13(pm, i)    #   add constraint 13
     end
 
     for i in ids(pm, :branch)
         constraint_ohms_yt_from(pm, i)
-        constraint_ohms_yt_to(pm, i)
+        constraint_ohms_yt_to(pm, i) #   in the DCPModel case here will happen nothing
 
         constraint_voltage_angle_difference(pm, i)
 
