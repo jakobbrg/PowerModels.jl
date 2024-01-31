@@ -11,9 +11,9 @@ function build_opf_bichler(pm::AbstractPowerModel)
 
     constraint_x_bl_bounds(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl
 
-    constraint__inelastic_demand(pm)        #   add constraint 2 # is differenciated for each model / x_b - sum(x_bl) = min_Pb (+ min_Qb)
+    constraint_inelastic_demand(pm)        #   add constraint 2 # is differenciated for each model / x_b - sum(x_bl) = min_Pb (+ min_Qb)
     
-    constraint_ub_x_bl(pm)                  #   add constraint 3 # is differenciated for each model / x_b <= max_Pb (+ max_Qb)
+    constraint_ub_x_b(pm)                  #   add constraint 3 # is differenciated for each model / x_b <= max_Pb (+ max_Qb)
     
     constraint_lb_y_sl(pm)                  #   add constraint 4 # holds for every model / y_sl >= 0 
 

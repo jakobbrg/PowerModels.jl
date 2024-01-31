@@ -92,12 +92,27 @@ function constraint_power_consump_gen_flow(pm::AbstractPowerModel, bus_id::Int, 
         push!(to_tupels, (branch["index"], branch["t_bus"], branch["f_bus"]))
     end
 
+    
     # find all generators at f_bus
-    sum_generation = sum(y_s[s] for s in ref(pm, nw, :bus_gens, from_bus))
-    sum_consumption = sum(x_b[b] for b in ref(pm, nw, :bus_loads, from_bus))
-
-    p_from_sum = sum(p[tupel] for tupel in from_tupels)
-    p_to_sum = sum(p[tupel] for tupel in to_tupels)
+    if isempty(ref(pm, nw, :bus_gens, from_bus))
+        sum_generation = 0
+    else
+        sum_generation = sum(y_s[s] for s in ref(pm, nw, :bus_gens, from_bus))
+    end
+    if isempty(ref(pm, nw, :bus_loads, from_bus))
+        sum_consumption = 0
+    else
+        sum_consumption = sum(x_b[b] for b in ref(pm, nw, :bus_loads, from_bus))
+    end
+    
+    if isempty(branch_array_from_bus)
+        p_from_sum = 0
+        p_to_sum = 0
+    else
+        p_from_sum = sum(p[tupel] for tupel in from_tupels)
+        p_to_sum = sum(p[tupel] for tupel in to_tupels)
+    end
+    
 
     # add constraints
     for (i, f, t) in from_tupels

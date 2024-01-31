@@ -8,14 +8,14 @@
 #   constraint 2
 #   x_b - sum(x_bl) = min_Pb
 #   min_Pb = pd * tmin
-function constraint__inelastic_demand(pm::AbstractDCPModel, nw::Int=nw_id_default)
+function constraint_inelastic_demand(pm::AbstractDCPModel, nw::Int=nw_id_default)
 
     #access variable
     x_b = var(pm, nw, :x_b)
     x_bl = var(pm, nw, :x_bl)
 
     for b in ids(pm, nw, :load)
-        min_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "t_min")
+        min_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "tmin")
         JuMP.@constraint(pm.model, x_b[b] - sum(x_bl[b,l] for l in keys(ref(pm, nw, :load, b, "cblocks"))) == min_Pb)
     end
 
@@ -30,7 +30,7 @@ function constraint_ub_x_b(pm::AbstractDCPModel, nw::Int=nw_id_default)
     x_b = var(pm, nw, :x_b)
 
     for b in ids(pm, nw, :load)
-        max_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "t_max")
+        max_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "tmax")
         JuMP.@constraint(pm.model, x_b[b] <= max_Pb)
     end
 
@@ -46,8 +46,8 @@ function constraint_activegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_i
     u_s = var(pm, nw, :u_s)
 
     for s in ids(pm, nw, :gen)
-        min_Ps = ref(pm, nw, :gen, s, "p_min")
-        max_Ps = ref(pm, nw, :gen, s, "p_max")
+        min_Ps = ref(pm, nw, :gen, s, "pmin")
+        max_Ps = ref(pm, nw, :gen, s, "pmax")
         JuMP.@constraint(pm.model, y_s[s] - min_Ps*u_s[s] >= 0)
         JuMP.@constraint(pm.model, y_s[s] - max_Ps*u_s[s] <= 0)
     end
