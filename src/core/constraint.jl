@@ -125,17 +125,6 @@ function constraint_power_consump_gen_flow(pm::AbstractPowerModel, bus_id::Int, 
  
 end
 
-#constraint 14
-# va_refrence_bus = 0.0
-function constraint_va_refnode(pm::AbstractPowerModel, nw::Int=nw_id_default)
-    # access variables
-    va = var(pm, nw, :va)
-    id_ref_bus = ids(pm, nw, :ref_buses)
-
-    for i in id_ref_bus
-        JuMP.@constraint(pm.model, va[i] == 0.0)
-    end
-end
 
 "checks if a sufficient number of variables exist for the given keys collection"
 function _check_var_keys(vars, keys, var_name, comp_name)

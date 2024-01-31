@@ -1,10 +1,11 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel)
+    
     variable_bus_voltage(pm)
     variable_consumption_generation(pm)     #   add x_b, x_bl, y_s, y_sl variables
     variable_commited(pm)                   #   add u_s variables
     variable_branch_power(pm)               #   defines variables p_f, p_t, q_f, q_t (p_f = f_vw, p_t = f_wv)
-    variable_gen_power(pm)
+    
     
     
     objective_max_welfare(pm)               #   objective function of Bichlers formulations - maximize welfare
@@ -26,29 +27,30 @@ function build_opf_bichler(pm::AbstractPowerModel)
     constraint_model_voltage(pm)
 
     for i in ids(pm, :ref_buses)
-        constraint_theta_ref(pm, i)
+        constraint_theta_ref(pm, i)         #   constraint 14 / va_refrence_bus = 0.0
     end
 
     for i in ids(pm, :bus)
-        constraint_power_balance(pm, i)
+        #constraint_power_balance(pm, i)    #constraints the power balance, I think this is the part i need to redefine
         constraint_power_consump_gen_flow(pm, i)    #   add constraint 13
     end
 
-    constraint_va_refnode(pm)               #   add constraint 14
 
     for i in ids(pm, :branch)
-        constraint_ohms_yt_from(pm, i)
+        constraint_ohms_yt_from(pm, i)      #   constraint 12 / f_vw - B_vw(va_v - va_w) = 0
         constraint_ohms_yt_to(pm, i) #   in the DCPModel case here will happen nothing
 
-        constraint_voltage_angle_difference(pm, i)
+        constraint_voltage_angle_difference(pm, i)  # for DCP angmin <= va_fr - va_to <= angmax -> do we need this?
 
         constraint_thermal_limit_from(pm, i)
         constraint_thermal_limit_to(pm, i)
     end
-
+    """
+    we do not have dclines
     for i in ids(pm, :dcline)
         constraint_dcline_power_losses(pm, i)
     end
+    """
 end
 
 # solver function for the formulations of Prof. Bichler 
@@ -86,9 +88,11 @@ function build_opf(pm::AbstractPowerModel)
         constraint_theta_ref(pm, i)
     end
 
+"""
     for i in ids(pm, :bus)
         constraint_power_balance(pm, i)
     end
+"""
 
     for i in ids(pm, :branch)
         constraint_ohms_yt_from(pm, i)
