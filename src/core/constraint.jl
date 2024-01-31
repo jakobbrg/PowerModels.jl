@@ -5,7 +5,71 @@
 ###############################################################################
 
 #add constraints for the formulation of Prof. Bichler
-function constraint_13(pm::AbstractPowerModel, bus_id::Int, nw::Int=nw_id_default)
+
+#   constraint 1
+#   0 <= x_bl <= q_bl # holds for all models
+function constraint_x_bl_bounds(pm::AbstractPowerModel, nw::Int=nw_id_default)
+    # access variables
+    x_bl = var(pm, nw, :x_bl)
+    base = ref(pm, nw, :baseMVA)
+
+    for b in ids(pm, nw, :load)
+        for l in keys(ref(pm, nw, :load, b)["cblocks"])
+            q_bl = ref(pm, nw, :load, b)["cblocks"][l]["pmax"]/base
+            JuMP.@constraint(pm.model, 0 <= x_bl[b, l] <= q_bl)
+        end
+    end
+
+end
+
+#   constraint 4
+#   y_sl >= 0 # holds for all models
+function constraint_lb_y_sl(pm::AbstractPowerModel, nw::Int=nw_id_default)
+    # access variables
+    y_sl = var(pm, nw, :y_sl)
+
+    for s in ids(pm, nw, :gen)
+        for l in keys(ref(pm, nw, :gen, s, "cblocks"))
+            JuMP.@constraint(pm.model, y_sl[s, l] >= 0)
+        end
+    end
+end
+
+#   constraint 5
+#   y_sl - u_s*q_sl <= 0 # holds for all models
+function constraint_ub_activegeneration(pm::AbstractPowerModel, nw::Int=nw_id_default)
+
+    #access variables
+    y_sl = var(pm, nw, :y_sl)
+    u_s = var(pm, nw, :u_s)
+
+    for s in ids(pm, nw, :gen)
+        for l in keys(ref(pm, nw, :gen, s, "cblocks"))
+            q_sl = ref(pm, nw, :gen, s, "cblocks")[l]["pmax"]
+            JuMP.@constraint(pm.model, y_sl[s, l] - u_s[s]*q_sl <= 0)
+        end
+    end
+
+
+end
+
+#   constraint 6
+#   y_s - sum_ysl = 0 # holds for all models
+function constraint_generation_balance(pm::AbstractPowerModel, nw::Int=nw_id_default)
+    # access variables
+    y_s = var(pm, nw, :y_s)
+    y_sl = var(pm, nw, :y_sl)
+
+    for s in ids(pm, nw, :gen)
+        JuMP.@constraint(pm.model, y_s[s] - sum(y_sl[s, l] for l in keys(ref(pm, nw, :gen, s, "cblocks"))) == 0)
+    end
+end
+
+
+
+
+# constraint: sum(y_s) - sum(x_b) - sum(p) = 0  (p = f_vw)
+function constraint_power_consump_gen_flow(pm::AbstractPowerModel, bus_id::Int, nw::Int=nw_id_default)
     # access variables
     y_s = var(pm, nw, :y_s)
     x_b = var(pm, nw, :x_b)
@@ -44,6 +108,18 @@ function constraint_13(pm::AbstractPowerModel, bus_id::Int, nw::Int=nw_id_defaul
     JuMP.@constraint(pm.model, sum_generation - sum_consumption - p_to_sum == 0)
 
  
+end
+
+#constraint 14
+# va_refrence_bus = 0.0
+function constraint_va_refnode(pm::AbstractPowerModel, nw::Int=nw_id_default)
+    # access variables
+    va = var(pm, nw, :va)
+    id_ref_bus = ids(pm, nw, :ref_buses)
+
+    for i in id_ref_bus
+        JuMP.@constraint(pm.model, va[i] == 0.0)
+    end
 end
 
 "checks if a sufficient number of variables exist for the given keys collection"

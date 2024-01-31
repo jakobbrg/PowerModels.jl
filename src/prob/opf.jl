@@ -9,6 +9,20 @@ function build_opf_bichler(pm::AbstractPowerModel)
     
     objective_max_welfare(pm)               #   objective function of Bichlers formulations - maximize welfare
 
+    constraint_x_bl_bounds(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl
+
+    constraint__inelastic_demand(pm)        #   add constraint 2 # is differenciated for each model / x_b - sum(x_bl) = min_Pb (+ min_Qb)
+    
+    constraint_ub_x_bl(pm)                  #   add constraint 3 # is differenciated for each model / x_b <= max_Pb (+ max_Qb)
+    
+    constraint_lb_y_sl(pm)                  #   add constraint 4 # holds for every model / y_sl >= 0 
+
+    constraint_ub_activegeneration(pm)      #   add constraint 5 # holds for every model / y_s - u_s*q_sl <= 0
+
+    constraint_generation_balance(pm)       #   add constraint 6 # holds for every model / y_s - sum(y_sl) = 0
+
+    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # is differenciated for each model / y_s - u_s*max_Ps <= 0 & y_s - u_s*min_Ps >= 0
+
     constraint_model_voltage(pm)
 
     for i in ids(pm, :ref_buses)
@@ -17,8 +31,10 @@ function build_opf_bichler(pm::AbstractPowerModel)
 
     for i in ids(pm, :bus)
         constraint_power_balance(pm, i)
-        constraint_13(pm, i)    #   add constraint 13
+        constraint_power_consump_gen_flow(pm, i)    #   add constraint 13
     end
+
+    constraint_va_refnode(pm)               #   add constraint 14
 
     for i in ids(pm, :branch)
         constraint_ohms_yt_from(pm, i)

@@ -3,6 +3,58 @@
 
 ######## AbstractDCPForm Models (has va but assumes vm is 1.0) ########
 
+# add some constraints or variables to the model to meet the formulations of Prof. Bichler
+
+#   constraint 2
+#   x_b - sum(x_bl) = min_Pb
+#   min_Pb = pd * tmin
+function constraint__inelastic_demand(pm::AbstractDCPModel, nw::Int=nw_id_default)
+
+    #access variable
+    x_b = var(pm, nw, :x_b)
+    x_bl = var(pm, nw, :x_bl)
+
+    for b in ids(pm, nw, :load)
+        min_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "t_min")
+        JuMP.@constraint(pm.model, x_b[b] - sum(x_bl[b,l] for l in keys(ref(pm, nw, :load, b, "cblocks"))) == min_Pb)
+    end
+
+end
+
+#   constraint 3
+#   x_b <= max_Pb
+#   max_Pb = pd * tmax
+function constraint_ub_x_b(pm::AbstractDCPModel, nw::Int=nw_id_default)
+
+    #access variable
+    x_b = var(pm, nw, :x_b)
+
+    for b in ids(pm, nw, :load)
+        max_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "t_max")
+        JuMP.@constraint(pm.model, x_b[b] <= max_Pb)
+    end
+
+end
+
+#   constraint 7 & 8
+#   y_s - min_Ps*u_s >= 0   &
+#   y_s - max_Ps*u_s <= 0   
+function constraint_activegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_id_default)
+
+    #access variable
+    y_s = var(pm, nw, :y_s)
+    u_s = var(pm, nw, :u_s)
+
+    for s in ids(pm, nw, :gen)
+        min_Ps = ref(pm, nw, :gen, s, "p_min")
+        max_Ps = ref(pm, nw, :gen, s, "p_max")
+        JuMP.@constraint(pm.model, y_s[s] - min_Ps*u_s[s] >= 0)
+        JuMP.@constraint(pm.model, y_s[s] - max_Ps*u_s[s] <= 0)
+    end
+
+end
+
+
 ""
 function variable_bus_voltage(pm::AbstractDCPModel; kwargs...)
     variable_bus_voltage_angle(pm; kwargs...)
