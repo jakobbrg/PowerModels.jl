@@ -5,6 +5,34 @@
 
 # add some constraints or variables to the model to meet the formulations of Prof. Bichler
 
+# for every variable one can easily add the possibility to support multiple periods
+function variable_consumption_generation(pm::AbstractDCPModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+    
+    # add variable x_b consumption of buyer b
+    x_b = var(pm, nw)[:x_b] = JuMP.@variable(pm.model,
+        [i in ids(pm, :load)], base_name="$(nw)x_b",
+        start = 0, lower_bound = 0)
+
+    # add variable x_bl consumption of buyer b from bid l
+    x_bl = var(pm, nw)[:x_bl] = JuMP.@variable(pm.model,
+        [i in ids(pm, :load), j in keys(ref(pm, :load, 1, "cblocks"))], base_name="$(nw)x_bl",
+        start = 0, lower_bound = 0)
+
+    # add variable y_s generation of seller s
+    y_s = var(pm, nw)[:y_s] = JuMP.@variable(pm.model,
+        [i in ids(pm, :gen)], base_name="$(nw)y_s",
+        start = 0, lower_bound = 0)
+
+    # add variable y_sl generation of seller s from bid l
+    y_sl = var(pm, nw)[:y_sl] = JuMP.@variable(pm.model,
+        [i in ids(pm, :gen), j in keys(ref(pm, :gen, 1, "cblocks"))], base_name="$(nw)y_sl",
+        start = 0, lower_bound = 0)
+
+    report && sol_component_value(pm, nw, :load, :x_b, ids(pm, nw, :load), x_b)
+    report && sol_component_value(pm, nw, :gen, :y_s, ids(pm, nw, :gen), y_s)
+    
+end
+
 #   constraint 2
 #   x_b - sum(x_bl) = min_Pb
 #   min_Pb = pd * tmin

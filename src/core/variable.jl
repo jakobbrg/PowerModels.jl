@@ -6,31 +6,86 @@
 
 # add variables required to meet the formulations of Prof. Bichler
 # for every variable one can easily add the possibility to support multiple periods
+# is called for ACOPF, SOC, QC, SDP
 function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
     
-    # add variable x_b consumption of buyer b
-    x_b = var(pm, nw)[:x_b] = JuMP.@variable(pm.model,
-        [i in ids(pm, :load)], base_name="$(nw)x_b",
-        start = 0, lower_bound = 0)
+    variabel_real_xb_xbl(pm)
+    variable_im_xb_xbl(pm)
+    variable_real_ys_ysl(pm)
+    variable_im_ys_ysl(pm)
 
-    # add variable x_bl consumption of buyer b from bid l
-    x_bl = var(pm, nw)[:x_bl] = JuMP.@variable(pm.model,
-        [i in ids(pm, :load), j in keys(ref(pm, :load, 1, "cblocks"))], base_name="$(nw)x_bl",
-        start = 0, lower_bound = 0)
-
-    # add variable y_s generation of seller s
-    y_s = var(pm, nw)[:y_s] = JuMP.@variable(pm.model,
-        [i in ids(pm, :gen)], base_name="$(nw)y_s",
-        start = 0, lower_bound = 0)
-
-    # add variable y_sl generation of seller s from bid l
-    y_sl = var(pm, nw)[:y_sl] = JuMP.@variable(pm.model,
-        [i in ids(pm, :gen), j in keys(ref(pm, :gen, 1, "cblocks"))], base_name="$(nw)y_sl",
-        start = 0, lower_bound = 0)
-
-    report && sol_component_value(pm, nw, :load, :x_b, ids(pm, nw, :load), x_b)
-    report && sol_component_value(pm, nw, :gen, :y_s, ids(pm, nw, :gen), y_s)
     
+end
+
+#helper functions
+
+#active power consumption
+function variable_real_xb_xbl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+    Re_xb = var(pm, nw)[:Re_xb] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :load)], base_name="$(nw)Re_xb",
+        start = comp_start_value(ref(pm, nw, :load, i), "Re_xb_start")
+    )
+
+    Re_xbl = var(pm, nw)[:Re_xbl] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :load), l in keys(ref(pm, nw, :load, 1, "cblocks"))], base_name="$(nw)Re_xbl",
+        start = comp_start_value(ref(pm, nw, :load, i), "Re_xbl_start")
+    )
+
+    report && sol_component_value(pm, nw, :load, :Re_xb, ids(pm, nw, :load), Re_xb)
+    report && sol_component_value(pm, nw, :load, :Re_xbl, ids(pm, nw, :load), Re_xbl)
+end
+
+#reactive power consumption
+function variable_im_xb_xbl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+    Im_xb = var(pm, nw)[:Im_xb] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :load)], base_name="$(nw)Im_xb",
+        start = comp_start_value(ref(pm, nw, :load, i), "Im_xb_start")
+    )
+
+
+    Im_xbl = var(pm, nw)[:Im_xbl] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :load), l in keys(ref(pm, nw, :load, 1, "cblocks"))], base_name="$(nw)Im_xbl",
+        start = comp_start_value(ref(pm, nw, :load, i), "Im_xbl_start")
+    )
+   
+    report && sol_component_value(pm, nw, :load, :Im_xb, ids(pm, nw, :load), Im_xb)
+    report && sol_component_value(pm, nw, :load, :Im_xbl, ids(pm, nw, :load), Im_xbl)
+end
+
+#active power generation
+function variable_real_ys_ysl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+    Re_ys = var(pm, nw)[:Re_ys] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)Re_ys",
+        start = comp_start_value(ref(pm, nw, :gen, i), "Re_ys_start")
+    )
+
+    Re_ysl = var(pm, nw)[:Re_ysl] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen), l in keys(ref(pm, nw, :gen, 1, "cblocks"))], base_name="$(nw)Re_ysl",
+        start = comp_start_value(ref(pm, nw, :gen, i), "Re_ysl_start")
+    )
+
+    report && sol_component_value(pm, nw, :gen, :Re_ys, ids(pm, nw, :gen), Re_ys)
+    report && sol_component_value(pm, nw, :gen, :Re_ysl, ids(pm, nw, :gen), Re_ysl)
+end
+
+#reactive power generation
+function variable_im_ys_ysl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+    Im_ys = var(pm, nw)[:Im_ys] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)Im_ys",
+        start = comp_start_value(ref(pm, nw, :gen, i), "Im_ys_start")
+    )
+
+    Im_ysl = var(pm, nw)[:Im_ysl] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen), l in keys(ref(pm, nw, :gen, 1, "cblocks"))], base_name="$(nw)Im_ysl",
+        start = comp_start_value(ref(pm, nw, :gen, i), "Im_ysl_start")
+    )
+
+    report && sol_component_value(pm, nw, :gen, :Im_ys, ids(pm, nw, :gen), Im_ys)
+    report && sol_component_value(pm, nw, :gen, :Im_ysl, ids(pm, nw, :gen), Im_ysl)
 end
 
 function variable_commited(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)

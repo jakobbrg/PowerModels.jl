@@ -1,6 +1,6 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel)
-    
+
     variable_bus_voltage(pm)
     variable_consumption_generation(pm)     #   add x_b, x_bl, y_s, y_sl variables
     variable_commited(pm)                   #   add u_s variables
@@ -75,33 +75,32 @@ end
 
 ""
 function build_opf(pm::AbstractPowerModel)
-    variable_bus_voltage(pm)
-    variable_gen_power(pm)
-    variable_branch_power(pm)
+    variable_bus_voltage(pm)   # initiates va and vm for every bus in the network
+    variable_gen_power(pm)     # initiates pg and qg for every generator in the network pg is the active and qg is the reactive power produces at the end 
+    variable_branch_power(pm)   # initiates pf and qf for every branch in the network pf is the active and qf is the reactive power flowing from the from bus to the to bus
     variable_dcline_power(pm)
 
-    objective_min_fuel_and_flow_cost(pm)
+    objective_min_fuel_and_flow_cost(pm) # defines the cost functions for every generator and builds the objective function
 
-    constraint_model_voltage(pm)
+    constraint_model_voltage(pm)    # only does something for SOC, QC and SDP not know yet what
 
     for i in ids(pm, :ref_buses)
-        constraint_theta_ref(pm, i)
+        constraint_theta_ref(pm, i) # constraint 14 / va_refrence_bus = 0.0
     end
 
-"""
+
     for i in ids(pm, :bus)
-        constraint_power_balance(pm, i)
-    end
-"""
-
+        constraint_power_balance(pm, i) # constraints the power balnce regarding production and flows, 
+    end                                 #  this is what I need to implement in every of our models, 
+                                        #   since we introduce the consumption variables which change this part
     for i in ids(pm, :branch)
-        constraint_ohms_yt_from(pm, i)
-        constraint_ohms_yt_to(pm, i)
+        constraint_ohms_yt_from(pm, i)  # implements the Ohms law for the from bus-idx
+        constraint_ohms_yt_to(pm, i)   # implements the Ohms law for the to bus-idx
 
-        constraint_voltage_angle_difference(pm, i)
+        constraint_voltage_angle_difference(pm, i)  #für acp angmin <= va_fr - va_to <= angmax
 
-        constraint_thermal_limit_from(pm, i)
-        constraint_thermal_limit_to(pm, i)
+        constraint_thermal_limit_from(pm, i)    # implements the thermal limit for the from bus-idx (p_fr^2 + q_fr^2 <= rate_a^2)
+        constraint_thermal_limit_to(pm, i)    # implements the thermal limit for the to bus-idx (p_to^2 + q_to^2 <= rate_a^2)
     end
 
     for i in ids(pm, :dcline)
