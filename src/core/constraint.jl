@@ -22,6 +22,22 @@ function constraint_x_bl_bounds(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
 end
 
+#   constraint 3
+#   x_b <= max_Pb
+#   max_Pb = pd * tmax
+function constraint_ub_x_b(pm::AbstractPowerModel, nw::Int=nw_id_default)
+
+    #access variable
+    x_b = var(pm, nw, :x_b)
+
+    for b in ids(pm, nw, :load)
+        max_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "tmax")
+        min_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "tmin")
+        JuMP.@constraint(pm.model, min_Pb <= x_b[b] <= max_Pb)
+    end
+
+end
+
 #   constraint 4
 #   y_sl >= 0 # holds for all models
 function constraint_lb_y_sl(pm::AbstractPowerModel, nw::Int=nw_id_default)
@@ -123,6 +139,19 @@ function constraint_power_consump_gen_flow(pm::AbstractPowerModel, bus_id::Int, 
     JuMP.@constraint(pm.model, sum_generation - sum_consumption - p_to_sum == 0)
 
  
+end
+
+# constraint: sum(x_bl) = x_b / for all models despite DCOPF
+function constraint_inelastic_demand(pm::AbstractDCPModel, nw::Int=nw_id_default)
+
+    # access variables
+    x_bl = var(pm, nw, :x_bl)
+    x_b = var(pm, nw, :x_b)
+
+    for b in ids(pm, nw, :load)
+        JuMP.@constraint(pm.model, sum(x_bl[b, l] for l in keys(ref(pm, nw, :load, b)["cblocks"])) == x_b[b])
+    end
+
 end
 
 
