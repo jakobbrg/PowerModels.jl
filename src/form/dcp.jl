@@ -10,21 +10,7 @@ function variable_consumption_generation_im(pm::AbstractPowerModel, nw::Int=nw_i
     "do nothing, this model does not have complex variables!"
 end
 
-#   constraint 2
-#   x_b - sum(x_bl) = min_Pb
-#   min_Pb = pd * tmin
-function constraint_inelastic_demand(pm::AbstractDCPModel, nw::Int=nw_id_default)
 
-    #access variable
-    x_b = var(pm, nw, :x_b)
-    x_bl = var(pm, nw, :x_bl)
-
-    for b in ids(pm, nw, :load)
-        min_Pb = ref(pm, nw, :load, b, "pd")*ref(pm, nw, :load, b, "tmin")
-        JuMP.@constraint(pm.model, x_b[b] - sum(x_bl[b,l] for l in keys(ref(pm, nw, :load, b, "cblocks"))) == min_Pb)
-    end
-
-end
 
 
 

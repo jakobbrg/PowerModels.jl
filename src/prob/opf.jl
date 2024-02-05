@@ -1,5 +1,5 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
-function build_opf_bichler(pm::AbstractPowerModel)
+function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     variable_bus_voltage(pm)                #   DCP: defines va / AC: defines re_vi and im_vi / 
     variable_consumption_generation(pm)     #   All Models: defines x_b, x_bl, y_s, y_sl
@@ -15,7 +15,7 @@ function build_opf_bichler(pm::AbstractPowerModel)
 
     constraint_x_bl_bounds(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl / constraint.jl
 
-    constraint_inelastic_demand(pm)        #   add constraint 2 # DCOPF: x_b - sum(x_bl) = min_pb / AC, SOC, QC, SDP: sum(x_bl) = x_b 
+    constraint_inelastic_demand(pm)        #   add constraint 2 # DCOPF, AC, SOC, QC, SDP: sum(x_bl) = x_b 
     
     constraint_ub_x_b(pm)                  #   add constraint 3 DC, AC, SOC, QC, SDP: min_Pb <= x_b <= max_Pb 
     
@@ -25,13 +25,13 @@ function build_opf_bichler(pm::AbstractPowerModel)
 
     constraint_generation_balance(pm)       #   add constraint 6 # holds for every model / y_s - sum(y_sl) = 0
 
-    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # is differenciated for each model / y_s - u_s*max_Ps <= 0 & y_s - u_s*min_Ps >= 0
+    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # holdsfor every model / y_s - u_s*max_Ps <= 0 & y_s - u_s*min_Ps >= 0
 
     constraint_model_voltage(pm)
 
-    for i in ids(pm, :bus)
+    for (bus_i,arcs_array) in ref(pm, nw, :bus_arcs)
         #constraint_power_balance(pm, i)    #constraints the power balance, I think this is the part i need to redefine
-        constraint_power_consump_gen_flow(pm, i)    #   add constraint 13 / sum(y_s) - sum(x_b) - sum(f_vw) = 0
+        constraint_power_consump_gen_flow(pm, bus_i, arcs_array)    #   add constraint 13 / sum(y_s) - sum(x_b) - sum(f_vw) = 0
     end
 
     for i in ids(pm, :ref_buses)

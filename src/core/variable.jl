@@ -42,9 +42,10 @@ function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_d
 
     report && sol_component_value(pm, nw, :load, :x_b, ids(pm, nw, :load), x_b)
     report && sol_component_value(pm, nw, :gen, :y_s, ids(pm, nw, :gen), y_s)
-    report && sol_component_value(pm, nw, :load, :x_bl, ids(pm, nw, :load), x_bl)
-    report && sol_component_value(pm, nw, :gen, :y_sl, ids(pm, nw, :gen), y_sl)
-    
+    for i in 1:4
+        report && sol_component_value(pm, nw, :load, Symbol("x_b", i), ids(pm, nw, :load), x_bl[:,i])
+        report && sol_component_value(pm, nw, :gen, Symbol("y_s",i), ids(pm, nw, :gen), y_sl[:, i])
+    end
 end
 
 #reactive power consumption
