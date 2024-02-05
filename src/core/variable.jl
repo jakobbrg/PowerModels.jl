@@ -23,22 +23,23 @@ function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_d
     # add variable x_b consumption of buyer b
     x_b = var(pm, nw)[:x_b] = JuMP.@variable(pm.model,
         [i in ids(pm, :load)], base_name="$(nw)x_b",
-        start = 0, lower_bound = 0)
+        lower_bound = 0)
 
     # add variable x_bl consumption of buyer b from bid l
     x_bl = var(pm, nw)[:x_bl] = JuMP.@variable(pm.model,
         [i in ids(pm, :load), j in keys(ref(pm, :load, 1, "cblocks"))], base_name="$(nw)x_bl",
-        start = 0, lower_bound = 0)
+        lower_bound = 0)
 
     # add variable y_s generation of seller s
     y_s = var(pm, nw)[:y_s] = JuMP.@variable(pm.model,
         [i in ids(pm, :gen)], base_name="$(nw)y_s",
-        start = 0, lower_bound = 0)
+        lower_bound = 0)
 
     # add variable y_sl generation of seller s from bid l
     y_sl = var(pm, nw)[:y_sl] = JuMP.@variable(pm.model,
         [i in ids(pm, :gen), j in keys(ref(pm, :gen, 1, "cblocks"))], base_name="$(nw)y_sl",
-        start = 0, lower_bound = 0)
+        lower_bound = 0
+    )
 
     report && sol_component_value(pm, nw, :load, :x_b, ids(pm, nw, :load), x_b)
     report && sol_component_value(pm, nw, :gen, :y_s, ids(pm, nw, :gen), y_s)
@@ -71,13 +72,12 @@ end
 function variable_im_ys_ysl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
 
     Im_ys = var(pm, nw)[:Im_ys] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :gen)], base_name="$(nw)Im_ys",
-        start = comp_start_value(ref(pm, nw, :gen, i), "Im_ys_start")
+        [i in ids(pm, nw, :gen)], base_name="$(nw)Im_ys"
     )
+    
 
     Im_ysl = var(pm, nw)[:Im_ysl] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :gen), l in keys(ref(pm, nw, :gen, 1, "cblocks"))], base_name="$(nw)Im_ysl",
-        start = comp_start_value(ref(pm, nw, :gen, i), "Im_ysl_start")
     )
 
     report && sol_component_value(pm, nw, :gen, :Im_ys, ids(pm, nw, :gen), Im_ys)
@@ -86,8 +86,7 @@ end
 
 function variable_commited(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
     u_s = var(pm, nw)[:u_s] = JuMP.@variable(pm.model,
-        [s in ids(pm, :gen)], base_name="u_s",
-        start = 0, lower_bound = 0, upper_bound = 1, Int)
+        [s in ids(pm, :gen)], base_name="u_s", binary = true)
 
     report && sol_component_value(pm, nw, :gen, :u_s, ids(pm, nw, :gen), u_s)
 end

@@ -42,7 +42,7 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
         constraint_ohms_yt_from(pm, i)      #   constraint 12 / f_vw - B_vw(va_v - va_w) = 0
         constraint_ohms_yt_to(pm, i) #   in the DCPModel case here will happen nothing
 
-        constraint_voltage_angle_difference(pm, i)  # for DCP angmin <= va_fr - va_to <= angmax -> do we need this?
+       # constraint_voltage_angle_difference(pm, i)  # for DCP angmin <= va_fr - va_to <= angmax -> do we need this?
 
         constraint_thermal_limit_from(pm, i)
         constraint_thermal_limit_to(pm, i)
