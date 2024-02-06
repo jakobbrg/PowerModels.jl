@@ -64,7 +64,9 @@ function variable_im_xb_xbl(pm::AbstractPowerModel, nw::Int=nw_id_default, bound
     )
    
     report && sol_component_value(pm, nw, :load, :Im_xb, ids(pm, nw, :load), Im_xb)
-    report && sol_component_value(pm, nw, :load, :Im_xbl, ids(pm, nw, :load), Im_xbl)
+    for i in 1:4
+        report && sol_component_value(pm, nw, :load, Symbol("Im_xb", i), ids(pm, nw, :load), Im_xbl[:,i])
+    end
 end
 
 
@@ -81,7 +83,9 @@ function variable_im_ys_ysl(pm::AbstractPowerModel, nw::Int=nw_id_default, bound
     )
 
     report && sol_component_value(pm, nw, :gen, :Im_ys, ids(pm, nw, :gen), Im_ys)
-    report && sol_component_value(pm, nw, :gen, :Im_ysl, ids(pm, nw, :gen), Im_ysl)
+    for i in 1:4
+        report && sol_component_value(pm, nw, :gen, Symbol("Im_ys", i), ids(pm, nw, :gen), Im_ysl[:,i])
+    end
 end
 
 function variable_commited(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)

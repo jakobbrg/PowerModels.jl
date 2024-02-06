@@ -6,9 +6,43 @@
 
 #add constraints for the formulation of Prof. Bichler
 
+
+#   constraint 7 & 8
+#   y_s - min_Ps*u_s >= 0   &
+#   y_s - max_Ps*u_s <= 0   
+function constraint_activegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_id_default)
+
+    #access variable
+    y_s = var(pm, nw, :y_s)
+    u_s = var(pm, nw, :u_s)
+
+    for s in ids(pm, nw, :gen)
+        min_Ps = 0 #ref(pm, nw, :gen, s, "pmin")
+        max_Ps = ref(pm, nw, :gen, s, "pmax")
+        JuMP.@constraint(pm.model, y_s[s] - min_Ps*u_s[s] >= 0)
+        JuMP.@constraint(pm.model, y_s[s] - max_Ps*u_s[s] <= 0)
+        #JuMP.@constraint(pm.model, y_s[s] - u_s[s] >= -0.999)
+    end
+
+end
+
+
+function constraint_reactivegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_id_default) 
+    
+    #acces Variables
+    Im_ys = var(pm, nw, :Im_ys)
+    u_s = var(pm, nw, :u_s)
+
+    for s in ids(pm, nw, :gen)
+        min_Qs = ref(pm, nw, :gen, s, "qmin")
+        max_Qs = ref(pm, nw, :gen, s, "qmax")
+        JuMP.@constraint(pm.model, min_Qs*u_s[s] <= Im_ys[s] <= max_Qs*u_s[s])
+    end
+end
+
 #   constraint 1
 #   0 <= x_bl <= q_bl # holds for all models
-function constraint_x_bl_bounds(pm::AbstractPowerModel, nw::Int=nw_id_default)
+function constraint_bounds_x_bl(pm::AbstractPowerModel, nw::Int=nw_id_default)
     # access variables
     x_bl = var(pm, nw, :x_bl)
     base = ref(pm, nw, :baseMVA)
@@ -25,7 +59,7 @@ end
 #   constraint 3
 #   x_b <= max_Pb
 #   max_Pb = pd * tmax
-function constraint_ub_x_b(pm::AbstractPowerModel, nw::Int=nw_id_default)
+function constraint_bounds_x_b(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     #access variable
     x_b = var(pm, nw, :x_b)
@@ -34,6 +68,19 @@ function constraint_ub_x_b(pm::AbstractPowerModel, nw::Int=nw_id_default)
         max_Pb = sum(ref(pm, nw, :load, b, "cblocks")[l]["pmax"] for l in keys(ref(pm, nw, :load, b, "cblocks"))) / ref(pm, nw, :baseMVA)
         min_Pb = 0
         JuMP.@constraint(pm.model, min_Pb <= x_b[b] <= max_Pb)
+    end
+
+end
+
+function constraint_bounds_Im_xb(pm::DCPPowerModel, nw::Int=nw_id_default)
+
+    #access variable
+    Im_xb = var(pm, nw, :Im_xb)
+
+    for b in ids(pm, nw, :load)
+        max_Qb = 0
+        min_Qb = 0
+        JuMP.@constraint(pm.model, min_Qb <= Im_xb[b] <= max_Qb)
     end
 
 end
@@ -119,7 +166,7 @@ function constraint_power_consump_gen_flow(pm::AbstractPowerModel, from_bus::Int
 end
 
 # constraint: sum(x_bl) = x_b / for all models despite DCOPF
-function constraint_inelastic_demand(pm::AbstractDCPModel, nw::Int=nw_id_default)
+function constraint_inelastic_demand(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     # access variables
     x_bl = var(pm, nw, :x_bl)

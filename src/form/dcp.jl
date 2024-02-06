@@ -6,31 +6,16 @@
 # add some constraints or variables to the model to meet the formulations of Prof. Bichler
 
 # for every variable one can easily add the possibility to support multiple periods
-function variable_consumption_generation_im(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+function variable_consumption_generation_im(pm::AbstractPowerModel, nw::Int=nw_id_default)
     "do nothing, this model does not have complex variables!"
 end
 
+function constraint_reactivegeneration_limits(pm::DCPPowerModel, nw::Int=nw_id_default)
+    "nothing to do here!"
+end
 
-
-
-
-#   constraint 7 & 8
-#   y_s - min_Ps*u_s >= 0   &
-#   y_s - max_Ps*u_s <= 0   
-function constraint_activegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_id_default)
-
-    #access variable
-    y_s = var(pm, nw, :y_s)
-    u_s = var(pm, nw, :u_s)
-
-    for s in ids(pm, nw, :gen)
-        min_Ps = 0 #ref(pm, nw, :gen, s, "pmin")
-        max_Ps = ref(pm, nw, :gen, s, "pmax")
-        JuMP.@constraint(pm.model, y_s[s] - min_Ps*u_s[s] >= 0)
-        JuMP.@constraint(pm.model, y_s[s] - max_Ps*u_s[s] <= 0)
-        JuMP.@constraint(pm.model, y_s[s] - u_s[s] >= -0.999)
-    end
-
+function constraint_bounds_Im_xb(pm::DCPPowerModel, nw::Int=nw_id_default)
+    "nothing to do here!"
 end
 
 

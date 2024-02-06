@@ -15,12 +15,14 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
 
 
-    constraint_x_bl_bounds(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl / constraint.jl
+    constraint_bounds_x_bl(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl / constraint.jl
 
     constraint_inelastic_demand(pm)        #   add constraint 2 # DCOPF, AC, SOC, QC, SDP: sum(x_bl) = x_b 
     
-    constraint_ub_x_b(pm)                  #   add constraint 3 DC, AC, SOC, QC, SDP: min_Pb <= x_b <= max_Pb 
+    constraint_bounds_x_b(pm)                  #   add constraint 3 DC, AC, SOC, QC, SDP: min_Pb <= x_b <= max_Pb 
     
+    constraint_bounds_Im_xb(pm)
+
     constraint_lb_y_sl(pm)                  #   add constraint 4 # holds for every model / y_sl >= 0 
 
     constraint_ub_activegeneration(pm)      #   add constraint 5 # holds for every model / y_s - u_s*q_sl <= 0
@@ -28,6 +30,8 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
     constraint_generation_balance(pm)       #   add constraint 6 # holds for every model / y_s - sum(y_sl) = 0
 
     constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # holdsfor every model / y_s - u_s*max_Ps <= 0 & y_s - u_s*min_Ps >= 0
+
+    constraint_reactivegeneration_limits(pm) #  holds for AC, SOC, QC, SDP / y_s - u_s*max_Qs <= 0 & y_s - u_s*min_Qs >= 0 for DC does nothing
 
     constraint_model_voltage(pm)
 
