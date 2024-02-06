@@ -7,7 +7,7 @@
 # add variables required to meet the formulations of Prof. Bichler
 # for every variable one can easily add the possibility to support multiple periods
 # is called for ACOPF, SOC, QC, SDP
-function variable_consumption_generation_im(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+function variable_consumption_generation_im(pm:: AbstractAlternatingModels, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
     
     variable_im_xb_xbl(pm)
     variable_im_ys_ysl(pm)

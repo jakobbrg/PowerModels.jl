@@ -540,3 +540,5 @@ AbstractPolarModels = Union{AbstractACPModel, AbstractACTModel, AbstractLPACMode
 
 "union of all conic Model branches"
 AbstractConicModels = Union{AbstractConicModel, AbstractBFConicModel}
+
+AbstractAlternatingModels = Union{AbstractACPModel, AbstractACRModel, AbstractACTModel, AbstractWRModel, AbstractConicModel}

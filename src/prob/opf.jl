@@ -1,3 +1,5 @@
+
+
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
@@ -53,7 +55,12 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
         constraint_dcline_power_losses(pm, i)
     end
     """
+
+    # Model ausgeben
+    print(pm.model)
+    
 end
+
 
 # solver function for the formulations of Prof. Bichler 
 function solve_opf_bichler(file, model_type::Type, optimizer; kwargs...)
