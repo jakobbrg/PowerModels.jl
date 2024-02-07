@@ -21,23 +21,21 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
     
     constraint_bounds_x_b(pm)                  #   add constraint 3 DC, AC, SOC, QC, SDP: min_Pb <= x_b <= max_Pb 
     
-    constraint_bounds_Im_xb(pm)
+    constraint_bounds_Im_xb(pm)             #  for AC, SOC, QC, SDP / -min_Qb <= im_xb <= max_Qb
 
-    constraint_lb_y_sl(pm)                  #   add constraint 4 # holds for every model / y_sl >= 0 
-
-    constraint_ub_activegeneration(pm)      #   add constraint 5 # holds for every model / y_s - u_s*q_sl <= 0
+    constraint_bounds_activegeneration(pm)      #   add constraint 5 # holds for every model / y_sl >= 0  & y_s - u_s*q_sl <= 0
 
     constraint_generation_balance(pm)       #   add constraint 6 # holds for every model / y_s - sum(y_sl) = 0
 
-    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # holdsfor every model / y_s - u_s*max_Ps <= 0 & y_s - u_s*min_Ps >= 0
+    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # holdsfor every model / min_Ps*u_s <= y_s <= max_Ps*u_s
 
     constraint_reactivegeneration_limits(pm) #  holds for AC, SOC, QC, SDP / y_s - u_s*max_Qs <= 0 & y_s - u_s*min_Qs >= 0 for DC does nothing
 
     constraint_model_voltage(pm)
 
     for (bus_i,arcs_array) in ref(pm, nw, :bus_arcs)
-        #constraint_power_balance(pm, i)    #constraints the power balance, I think this is the part i need to redefine
-        constraint_power_consump_gen_flow(pm, bus_i, arcs_array)    #   add constraint 13 / sum(y_s) - sum(x_b) - sum(f_vw) = 0
+        constraint_power_consump_gen_flow(pm, bus_i, arcs_array)    #   add constraint 13 / sum(y_s) - sum(x_b) - sum(p(l, i, j)) = 0
+        constraint_power_consump_gen_flow_im(pm, bus_i, arcs_array) #   add constraint 14 / sum(im_ys) - sum(im_xb) - sum(q(l, i, j)) = 0
     end
 
     for i in ids(pm, :ref_buses)
@@ -50,9 +48,14 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
        # constraint_voltage_angle_difference(pm, i)  # for DCP angmin <= va_fr - va_to <= angmax -> do we need this?
 
-        constraint_thermal_limit_from(pm, i)
-        constraint_thermal_limit_to(pm, i)
+        constraint_thermal_limit_from(pm, i)  #   DC: - a_rate <= p <= a_rate / AC: p_fr^2 + q_fr^2 <= rate_a^2
+        constraint_thermal_limit_to(pm, i)   #   DC: nothing is symmetric / AC: p_to^2 + q_to^2 <= rate_a^2
     end
+
+
+    # model specific constraints
+    constraints_model_sepcific(pm)
+
     """
     we do not have dclines
     for i in ids(pm, :dcline)

@@ -1,5 +1,46 @@
 ### rectangular form of the non-convex AC equations
 
+# model specific constraints 
+# constraints for AC model after the formulation of Bichler et al. 2023
+function constraints_model_sepcific(pm::AbstractACRModel, nw::Int=nw_id_default)
+
+    #access variables
+    Re_y_s = var(pm, nw, :y_s)
+    Re_x_b = var(pm, nw, :x_b)
+
+    vi = var(pm, nw, :vi)   #imaginary part
+    vr = var(pm, nw, :vr)   #real part
+
+    #access parameters
+
+
+    for i in ids(pm, nw, :bus)
+
+        if !isempty(ref(pm, nw, :bus_gens, i))
+            sum_y_is = sum(Re_y_s[s] for s in ref(pm, nw, :bus_gens, i))
+        end
+
+        if !isempty(ref(pm, nw, :bus_loads, i))
+            sum_x_ib = sum(Re_x_b[l] for l in ref(pm, nw, :bus_loads, i))
+        end
+
+        neigbors = []
+
+        for arc in ref(pm, nw, :arcs_from)
+            l, f, k = arc
+            if f == i
+                push!(neigbors, k)
+            end
+        end
+
+        for k in neighbors
+        end
+
+
+    end
+
+end
+
 ""
 function variable_bus_voltage(pm::AbstractACRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     variable_bus_voltage_real(pm; nw=nw, bounded=bounded, kwargs...)

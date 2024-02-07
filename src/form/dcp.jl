@@ -18,6 +18,11 @@ function constraint_bounds_Im_xb(pm::DCPPowerModel, nw::Int=nw_id_default)
     "nothing to do here!"
 end
 
+function constraint_power_consump_gen_flow_im(pm::DCPPowerModel, from_bus::Int, arcs_array::Any, nw::Int=nw_id_default)
+    "nothing to do here!"
+end
+
+
 
 ""
 function variable_bus_voltage(pm::AbstractDCPModel; kwargs...)

@@ -19,8 +19,8 @@ function constraint_activegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_i
     for s in ids(pm, nw, :gen)
         min_Ps = 0 #ref(pm, nw, :gen, s, "pmin")
         max_Ps = ref(pm, nw, :gen, s, "pmax")
-        JuMP.@constraint(pm.model, y_s[s] - min_Ps*u_s[s] >= 0)
-        JuMP.@constraint(pm.model, y_s[s] - max_Ps*u_s[s] <= 0)
+        JuMP.@constraint(pm.model, min_Ps*u_s[s] <= y_s[s])
+        JuMP.@constraint(pm.model, y_s[s] <= max_Ps*u_s[s])
         #JuMP.@constraint(pm.model, y_s[s] - u_s[s] >= -0.999)
     end
 
@@ -36,7 +36,8 @@ function constraint_reactivegeneration_limits(pm::AbstractPowerModel, nw::Int=nw
     for s in ids(pm, nw, :gen)
         min_Qs = ref(pm, nw, :gen, s, "qmin")
         max_Qs = ref(pm, nw, :gen, s, "qmax")
-        JuMP.@constraint(pm.model, min_Qs*u_s[s] <= Im_ys[s] <= max_Qs*u_s[s])
+        JuMP.@constraint(pm.model, min_Qs*u_s[s] <= Im_ys[s])
+        JuMP.@constraint(pm.model, Im_ys[s] <= max_Qs*u_s[s])
     end
 end
 
@@ -72,7 +73,7 @@ function constraint_bounds_x_b(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
 end
 
-function constraint_bounds_Im_xb(pm::DCPPowerModel, nw::Int=nw_id_default)
+function constraint_bounds_Im_xb(pm:: AbstractPowerModel, nw::Int=nw_id_default)
 
     #access variable
     Im_xb = var(pm, nw, :Im_xb)
@@ -85,22 +86,11 @@ function constraint_bounds_Im_xb(pm::DCPPowerModel, nw::Int=nw_id_default)
 
 end
 
-#   constraint 4
-#   y_sl >= 0 # holds for all models
-function constraint_lb_y_sl(pm::AbstractPowerModel, nw::Int=nw_id_default)
-    # access variables
-    y_sl = var(pm, nw, :y_sl)
-
-    for s in ids(pm, nw, :gen)
-        for l in keys(ref(pm, nw, :gen, s, "cblocks"))
-            JuMP.@constraint(pm.model, y_sl[s, l] >= 0)
-        end
-    end
-end
 
 #   constraint 5
 #   y_sl - u_s*q_sl <= 0 # holds for all models
-function constraint_ub_activegeneration(pm::AbstractPowerModel, nw::Int=nw_id_default)
+#   y_sl >= 0 # holds for all models
+function constraint_bounds_activegeneration(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     #access variables
     y_sl = var(pm, nw, :y_sl)
@@ -110,6 +100,7 @@ function constraint_ub_activegeneration(pm::AbstractPowerModel, nw::Int=nw_id_de
         for l in keys(ref(pm, nw, :gen, s, "cblocks"))
             q_sl = ref(pm, nw, :gen, s, "cblocks")[l]["pmax"]/ref(pm, nw, :baseMVA)
             JuMP.@constraint(pm.model, y_sl[s, l] - u_s[s]*q_sl <= 0)
+            JuMP.@constraint(pm.model, y_sl[s, l] >= 0)
         end
     end
 
@@ -163,6 +154,38 @@ function constraint_power_consump_gen_flow(pm::AbstractPowerModel, from_bus::Int
    
 
  
+end
+#   sum(Im_ys) - sum(Im_xb) - sum(q(l, i, j)) = 0
+function constraint_power_consump_gen_flow_im(pm::AbstractPowerModel, from_bus::Int, arcs_array::Any, nw::Int=nw_id_default)
+
+    # access variables
+    Im_ys = var(pm, nw, :Im_ys)
+    Im_xb = var(pm, nw, :Im_xb)
+    q_fr = var(pm,nw, :q)
+
+    if isempty(arcs_array)
+        sum_q_fr = 0
+    else
+        sum_q_fr = sum(p_fr[i] for i in arcs_array)
+    end
+
+     # find all generators at f_bus
+    if isempty(ref(pm, nw, :bus_gens, from_bus))
+        sum_generation = 0
+    else
+        sum_generation = sum(Im_ys[s] for s in ref(pm, nw, :bus_gens, from_bus))
+    end
+    
+    # ind all consumers at f_bus
+    if isempty(ref(pm, nw, :bus_loads, from_bus))
+        sum_consumption = 0
+    else
+        sum_consumption = sum(Im_xb[b] for b in ref(pm, nw, :bus_loads, from_bus))
+    end
+
+    JuMP.@constraint(pm.model, sum_generation - sum_consumption - sum_q_fr == 0)
+
+    #needs to be implemented
 end
 
 # constraint: sum(x_bl) = x_b / for all models despite DCOPF
