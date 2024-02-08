@@ -66,8 +66,8 @@ function constraint_bounds_x_b(pm::AbstractPowerModel, nw::Int=nw_id_default)
     x_b = var(pm, nw, :x_b)
 
     for b in ids(pm, nw, :load)
-        max_Pb = sum(ref(pm, nw, :load, b, "cblocks")[l]["pmax"] for l in keys(ref(pm, nw, :load, b, "cblocks"))) / ref(pm, nw, :baseMVA)
-        min_Pb = 0
+        max_Pb = ref(pm, nw, :load, b)["pd"]*ref(pm, nw, :load, b)["tmax"]
+        min_Pb = ref(pm, nw, :load, b)["pd"]*ref(pm, nw, :load, b)["tmin"]
         JuMP.@constraint(pm.model, min_Pb <= x_b[b] <= max_Pb)
     end
 
@@ -79,8 +79,8 @@ function constraint_bounds_Im_xb(pm:: AbstractPowerModel, nw::Int=nw_id_default)
     Im_xb = var(pm, nw, :Im_xb)
 
     for b in ids(pm, nw, :load)
-        max_Qb = 0
-        min_Qb = 0
+        max_Qb = ref(pm, nw, :load, b)["qd"]*ref(pm, nw, :load, b)["tmax"]
+        min_Qb = ref(pm, nw, :load, b)["qd"]*ref(pm, nw, :load, b)["tmin"]
         JuMP.@constraint(pm.model, min_Qb <= Im_xb[b] <= max_Qb)
     end
 

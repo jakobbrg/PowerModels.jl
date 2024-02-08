@@ -22,6 +22,60 @@ function constraint_power_consump_gen_flow_im(pm::DCPPowerModel, from_bus::Int, 
     "nothing to do here!"
 end
 
+function constraints_model_sepcific(pm::DCPPowerModel, bus_id::Int, nw::Int=nw_id_default)
+    
+    #access variables
+    y_s = var(pm, nw, :y_s)
+    x_b = var(pm, nw, :x_b)
+    va = var(pm, nw, :va)
+
+    for i in ids(pm, nw, :bus)
+        JuMP.@constraint(pm.model, va[i] <= pi/2)
+        JuMP.@constraint(pm.model, va[i] >= -pi/2)
+    end
+    sum_y_is = 0.0
+    sum_x_ib = 0.0
+    try
+        sum_y_is = sum(y_s[s] for s in ref(pm, nw, :bus_gens, bus_id))
+    catch
+        sum_y_is = 0
+    end
+
+    try
+        sum_x_ib = sum(x_b[b] for b in ref(pm, nw, :bus_loads, bus_id))
+    catch
+        sum_x_ib = 0
+    end
+
+    sum_B_ik = 0.0
+    sum_B_ki = 0.0
+
+    for (i,branch) in ref(pm, nw, :branch)
+        f_bus = branch["f_bus"]
+        t_bus = branch["t_bus"]
+
+        if(f_bus == bus_id)
+            g, b = calc_branch_y(branch)
+            b = 0.01    # for testin
+
+            sum_B_ik = sum_B_ik + (-b*(va[f_bus] - va[t_bus]))
+            sum_B_ki = sum_B_ki + (-b*(va[t_bus] - va[f_bus]))
+
+        end
+        
+    end
+
+    println("sum_y_is: ", sum_y_is)
+    println("sum_x_ib: ", sum_x_ib)
+    println("sum_B_ik: ", sum_B_ik)
+    println("sum_B_ki: ", sum_B_ki)
+    # add constraints
+    JuMP.@constraint(pm.model, sum_y_is - sum_x_ib - sum_B_ik + sum_B_ki == 0)
+
+
+
+end
+
 
 
 ""

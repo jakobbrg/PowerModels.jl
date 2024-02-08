@@ -7,14 +7,14 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
     variable_consumption_generation(pm)     #   All Models: defines x_b, x_bl, y_s, y_sl
     variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/xbl/ys/ysl) /
     variable_commited(pm)                   #   add u_s variable
-    variable_branch_power(pm)               #   defines variables p_f, p_t, q_f, q_t (p_f = f_vw, p_t = f_wv)
+    
     
     
     
     objective_max_welfare(pm)               #   objective function of Bichlers formulations - maximize welfare
 
 
-
+    
     constraint_bounds_x_bl(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl / constraint.jl
 
     constraint_inelastic_demand(pm)        #   add constraint 2 # DCOPF, AC, SOC, QC, SDP: sum(x_bl) = x_b 
@@ -33,35 +33,22 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     constraint_model_voltage(pm)
 
-    for (bus_i,arcs_array) in ref(pm, nw, :bus_arcs)
-        constraint_power_consump_gen_flow(pm, bus_i, arcs_array)    #   add constraint 13 / sum(y_s) - sum(x_b) - sum(p(l, i, j)) = 0
-        constraint_power_consump_gen_flow_im(pm, bus_i, arcs_array) #   add constraint 14 / sum(im_ys) - sum(im_xb) - sum(q(l, i, j)) = 0
-    end
-
     for i in ids(pm, :ref_buses)
         constraint_theta_ref(pm, i)         #   constraint 14 / va_refrence_bus = 0.0
     end
 
-    for i in ids(pm, :branch)
-        constraint_ohms_yt_from(pm, i)      #   constraint 12 / f_vw - B_vw(va_v - va_w) = 0
-        constraint_ohms_yt_to(pm, i) #   in the DCPModel case here will happen nothing
-
-       # constraint_voltage_angle_difference(pm, i)  # for DCP angmin <= va_fr - va_to <= angmax -> do we need this?
-
-        constraint_thermal_limit_from(pm, i)  #   DC: - a_rate <= p <= a_rate / AC: p_fr^2 + q_fr^2 <= rate_a^2
-        constraint_thermal_limit_to(pm, i)   #   DC: nothing is symmetric / AC: p_to^2 + q_to^2 <= rate_a^2
-    end
-
-
+    for i in ids(pm, nw, :bus)
     # model specific constraints
-    constraints_model_sepcific(pm)
+        constraints_model_sepcific(pm, i)
 
-    """
-    we do not have dclines
-    for i in ids(pm, :dcline)
-        constraint_dcline_power_losses(pm, i)
     end
-    """
+
+    #   explanation for model specific constraints
+    #   DCOPF: sets constraints for every node i / va[i] \in  [-pi/2, pi/2] && sum(y_is) - sum(x_is) = sum(-B_ik*(va[i] - va[k])) - sum(-B+ki*(va[k] - va[i]))
+
+    #   ACOPF:
+
+   
 
     # Model ausgeben
     print(pm.model)
