@@ -57,16 +57,8 @@ function variable_im_xb_xbl(pm::AbstractPowerModel, nw::Int=nw_id_default, bound
         start = comp_start_value(ref(pm, nw, :load, i), "Im_xb_start")
     )
 
-
-    Im_xbl = var(pm, nw)[:Im_xbl] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :load), l in keys(ref(pm, nw, :load, 1, "cblocks"))], base_name="$(nw)Im_xbl",
-        start = comp_start_value(ref(pm, nw, :load, i), "Im_xbl_start")
-    )
    
     report && sol_component_value(pm, nw, :load, :Im_xb, ids(pm, nw, :load), Im_xb)
-    for i in 1:4
-        report && sol_component_value(pm, nw, :load, Symbol("Im_xb", i), ids(pm, nw, :load), Im_xbl[:,i])
-    end
 end
 
 
@@ -76,16 +68,9 @@ function variable_im_ys_ysl(pm::AbstractPowerModel, nw::Int=nw_id_default, bound
     Im_ys = var(pm, nw)[:Im_ys] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :gen)], base_name="$(nw)Im_ys"
     )
-    
-
-    Im_ysl = var(pm, nw)[:Im_ysl] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :gen), l in keys(ref(pm, nw, :gen, 1, "cblocks"))], base_name="$(nw)Im_ysl",
-    )
 
     report && sol_component_value(pm, nw, :gen, :Im_ys, ids(pm, nw, :gen), Im_ys)
-    for i in 1:4
-        report && sol_component_value(pm, nw, :gen, Symbol("Im_ys", i), ids(pm, nw, :gen), Im_ysl[:,i])
-    end
+
 end
 
 function variable_commited(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)

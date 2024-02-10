@@ -36,7 +36,7 @@ function constraint_reactivegeneration_limits(pm::AbstractPowerModel, nw::Int=nw
     for s in ids(pm, nw, :gen)
         min_Qs = ref(pm, nw, :gen, s, "qmin")
         max_Qs = ref(pm, nw, :gen, s, "qmax")
-        JuMP.@constraint(pm.model, min_Qs*u_s[s] <= Im_ys[s])
+        JuMP.@constraint(pm.model, Im_ys[s] >= min_Qs*u_s[s] )
         JuMP.@constraint(pm.model, Im_ys[s] <= max_Qs*u_s[s])
     end
 end

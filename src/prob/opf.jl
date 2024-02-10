@@ -3,9 +3,9 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
-    variable_bus_voltage(pm)                #   DCP: defines va / AC: defines re_vi and im_vi / 
+    variable_bus_voltage(pm)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
     variable_consumption_generation(pm)     #   All Models: defines x_b, x_bl, y_s, y_sl
-    variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/xbl/ys/ysl) /
+    variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/ys) /
     variable_commited(pm)                   #   add u_s variable
     
     
@@ -32,10 +32,6 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
     constraint_reactivegeneration_limits(pm) #  holds for AC, SOC, QC, SDP / y_s - u_s*max_Qs <= 0 & y_s - u_s*min_Qs >= 0 for DC does nothing
 
     constraint_model_voltage(pm)
-
-    for i in ids(pm, :ref_buses)
-        constraint_theta_ref(pm, i)         #   constraint 14 / va_refrence_bus = 0.0
-    end
 
     for i in ids(pm, nw, :bus)
     # model specific constraints

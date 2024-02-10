@@ -50,12 +50,12 @@ function constraints_model_sepcific(pm::DCPPowerModel, bus_id::Int, nw::Int=nw_i
     sum_B_ik = 0.0
     sum_B_ki = 0.0
 
-    for (i,branch) in ref(pm, nw, :branch)
-        f_bus = branch["f_bus"]
-        t_bus = branch["t_bus"]
+    for branch in ref(pm, nw, :arcs)
+        (id, f_bus, t_bus) = branch
 
-        if(f_bus == bus_id)
-            g, b = calc_branch_y(branch)
+        if (f_bus == bus_id)
+            branch_data = ref(pm, nw, :branch, id)
+            g, b = calc_branch_y(branch_data)
             b = 0.01    # for testin
 
             sum_B_ik = sum_B_ik + (-b*(va[f_bus] - va[t_bus]))

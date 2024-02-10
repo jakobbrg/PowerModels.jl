@@ -2,7 +2,14 @@
 
 # model specific constraints 
 # constraints for AC model after the formulation of Bichler et al. 2023
-function constraints_model_sepcific(pm::AbstractACRModel, nw::Int=nw_id_default)
+function constraints_model_sepcific(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_default)
+
+    constraint_real_xb_ys(pm, bus_id)
+    constraint_im_xb_ys(pm, bus_id)
+
+end
+
+function constraint_real_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_default)
 
     #access variables
     Re_y_s = var(pm, nw, :y_s)
@@ -11,33 +18,80 @@ function constraints_model_sepcific(pm::AbstractACRModel, nw::Int=nw_id_default)
     vi = var(pm, nw, :vi)   #imaginary part
     vr = var(pm, nw, :vr)   #real part
 
+    sum_y_is = 0.0
+    sum_x_ib = 0.0
+    try
+        sum_y_is = sum(Re_y_s[s] for s in ref(pm, nw, :bus_gens, bus_id))
+    catch
+        sum_y_is = 0
+    end
+
+    try
+        sum_x_ib = sum(Re_x_b[b] for b in ref(pm, nw, :bus_loads, bus_id))
+    catch
+        sum_x_ib = 0
+    end
+
     #access parameters
+    sum_node = 0.0
 
+    for branch in ref(pm, nw, :arcs)
+        (id, f_bus, t_bus) = branch
 
-    for i in ids(pm, nw, :bus)
+        if f_bus == bus_id
+            branch_data = ref(pm, nw, :branch, id)
+            g, b = calc_branch_y(branch_data)
+            b = 0.01
+            g = 0.01
 
-        if !isempty(ref(pm, nw, :bus_gens, i))
-            sum_y_is = sum(Re_y_s[s] for s in ref(pm, nw, :bus_gens, i))
+            sum_node = sum_node + (vr[f_bus] * (g*vr[t_bus] - b*vi[t_bus]) + vi[f_bus] * (b*vr[t_bus] + g*vi[t_bus]))
         end
+    end
 
-        if !isempty(ref(pm, nw, :bus_loads, i))
-            sum_x_ib = sum(Re_x_b[l] for l in ref(pm, nw, :bus_loads, i))
+    JuMP.@constraint(pm.model, sum_y_is - sum_x_ib - sum_node == 0)
+
+end
+
+function constraint_im_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_default)
+
+        #access variables
+        Im_y_s = var(pm, nw, :Im_ys)
+        Im_x_b = var(pm, nw, :Im_xb)
+    
+        vi = var(pm, nw, :vi)   #imaginary part
+        vr = var(pm, nw, :vr)   #real part
+    
+        sum_Im_y_is = 0.0
+        sum_Im_x_ib = 0.0
+        try
+            sum_y_is = sum(Im_y_s[s] for s in ref(pm, nw, :bus_gens, bus_id))  #  :bus_gens holds every generator at the specific bus with id == bus_id
+        catch
+            sum_y_is = 0
         end
-
-        neigbors = []
-
-        for arc in ref(pm, nw, :arcs_from)
-            l, f, k = arc
-            if f == i
-                push!(neigbors, k)
+    
+        try
+            sum_x_ib = sum(Im_x_b[b] for b in ref(pm, nw, :bus_loads, bus_id)) #   :bus_loads holds every load at the specific load with id == bus_id
+        catch
+            sum_x_ib = 0
+        end
+    
+        #access parameters
+        sum_node = 0.0
+    
+        for branch in ref(pm, nw, :arcs)
+            (id, f_bus, t_bus) = branch
+    
+            if f_bus == bus_id
+                branch_data = ref(pm, nw, :branch, id)
+                g, b = calc_branch_y(branch_data)
+                b = 0.01
+                g = 0.01
+    
+                sum_node = sum_node + (vr[f_bus] * (-b*vr[t_bus] - g*vi[t_bus]) + vi[f_bus] * (g*vr[t_bus] - b*vi[t_bus]))
             end
         end
-
-        for k in neighbors
-        end
-
-
-    end
+    
+        JuMP.@constraint(pm.model, sum_Im_y_is - sum_Im_x_ib - sum_node == 0)
 
 end
 
