@@ -27,13 +27,18 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     constraint_generation_balance(pm)       #   add constraint 6 # holds for every model / y_s - sum(y_sl) = 0
 
-    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # holdsfor every model / min_Ps*u_s <= y_s <= max_Ps*u_s
+    constraint_activegeneration_limits(pm)  #   add constraint 7 & 8 # holds for every model / min_Ps*u_s <= y_s <= max_Ps*u_s
 
     constraint_reactivegeneration_limits(pm) #  holds for AC, SOC, QC, SDP / y_s - u_s*max_Qs <= 0 & y_s - u_s*min_Qs >= 0 for DC does nothing
 
-    constraint_model_voltage(pm)
+    if isa(pm, QCRMPowerModel)
+        constraint_model_voltage_bichler(pm)       #   add constraint 9 # holds for DC / sum(y_sl) - sum(x_bl) = sum(-B_ik*(va[i] - va[k])) - sum(-B+ki*(va[k] - va[i]))
+    else
+        constraint_model_voltage(pm)
+    end
 
-    for i in ids(pm, nw, :bus)
+
+     for i in ids(pm, nw, :bus)
     # model specific constraints
         constraints_model_sepcific(pm, i)
 

@@ -1,6 +1,90 @@
 ### quadratic relaxations in the rectangular W-space (e.g. SOC and QC relaxations)
 
 
+# for SOC Model add specific constraints required for formulation of Bichler
+function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw_id_default)
+
+    # access variables
+    Re_xb = var(pm, nw, :x_b)
+    Re_ys = var(pm, nw, :y_s)
+
+    Im_xb = var(pm, nw, :Im_xb)
+    Im_ys = var(pm, nw, :Im_ys)
+
+    c = var(pm, nw, :w)
+    ci = var(pm, nw, :wi)
+    cr = var(pm, nw, :wr)
+
+    Re_sum_G_B = 0.0 
+    Im_sum_G_B = 0.0
+    Re_sum_xb = 0.0
+    Re_sum_ys = 0.0
+    Im_sum_xb = 0.0
+    Im_sum_ys = 0.0
+
+    G_ii = 0.01 
+    B_ii = 0.01
+    c_i = c[bus_id]
+
+    g = 0.0
+    b = 0.0
+
+    for (pair, data) in ref(pm, nw, :buspairs)
+        
+        bus_1, bus_2 = pair
+
+        if(bus_1 == bus_id || bus_2 == bus_id)
+            # add specific constraints
+            for (id,branch) in ref(pm, nw, :branch)
+
+                if(branch["f_bus"] == bus_1 && branch["t_bus"] == bus_2)
+                    g, b = calc_branch_y(branch)
+                end
+
+            end
+
+            g = 0.01
+            b = 0.01
+            Re_sum_G_B = Re_sum_G_B + (g*cr[pair] - b*ci[pair])
+            Im_sum_G_B = Im_sum_G_B + (-b*cr[pair] - g*ci[pair])
+
+        end
+    end
+    try
+        Re_sum_xb = sum(Re_xb[b] for b in ref(pm, nw, :bus_loads, bus_id))
+    catch e
+        @warn "No load found for bus $bus_id, but that is okay"
+    end
+
+    try
+        Re_sum_ys = sum(Re_ys[b] for b in ref(pm, nw, :bus_gens, bus_id))
+    catch e
+        @warn "No generator found for bus $bus_id, but that is okay"
+    end
+
+    try
+        Im_sum_xb = sum(Im_xb[b] for b in ref(pm, nw, :bus_loads, bus_id))
+    catch e
+        @warn "No load found for bus $bus_id, but that is okay"
+    end
+
+    try
+        Im_sum_ys = sum(Im_ys[b] for b in ref(pm, nw, :bus_gens, bus_id))
+    catch e
+        @warn "No generator found for bus $bus_id, but that is okay"
+    end
+
+
+    Re_sum_G_B = G_ii*c_i + Re_sum_G_B
+    Im_sum_G_B = -B_ii*c_i + Im_sum_G_B
+
+    JuMP.@constraint(pm.model, Re_sum_ys - Re_sum_xb == Re_sum_G_B)
+    JuMP.@constraint(pm.model, Im_sum_ys - Im_sum_xb == Im_sum_G_B)
+
+end
+
+
+
 ""
 function variable_bus_voltage(pm::AbstractWRModel; kwargs...)
     variable_bus_voltage_magnitude_sqr(pm; kwargs...)
@@ -411,7 +495,42 @@ function variable_bus_voltage(pm::AbstractQCWRModel; kwargs...)
     variable_buspair_voltage_product_magnitude(pm; kwargs...)
     variable_buspair_cosine(pm; kwargs...)
     variable_buspair_sine(pm; kwargs...)
-    variable_buspair_current_magnitude_sqr(pm; kwargs...)
+    #variable_buspair_current_magnitude_sqr(pm; kwargs...)
+end
+
+function constraint_model_voltage_bichler(pm::AbstractQCWRModel, n::Int= nw_id_default)
+    _check_missing_keys(var(pm, n), [:vm,:va,:td,:si,:cs,:vv,:w,:wr,:wi], typeof(pm))
+
+    v = var(pm, n, :vm)
+    t = var(pm, n, :va)
+
+    td = var(pm, n, :td)
+    si = var(pm, n, :si)
+    cs = var(pm, n, :cs)
+    vv = var(pm, n, :vv)
+
+    w  = var(pm, n, :w)
+    wr = var(pm, n, :wr)
+    wi = var(pm, n, :wi)
+
+    for (i,b) in ref(pm, n, :bus)
+        _IM.relaxation_sqr(pm.model, v[i], w[i])
+    end
+
+    for bp in ids(pm, n, :buspairs)
+        i,j = bp
+        JuMP.@constraint(pm.model, t[i] - t[j] == td[bp])
+
+        relaxation_sin(pm.model, td[bp], si[bp])
+        relaxation_cos(pm.model, td[bp], cs[bp])
+        _IM.relaxation_product(pm.model, v[i], v[j], vv[bp])
+        _IM.relaxation_product(pm.model, vv[bp], cs[bp], wr[bp])
+        _IM.relaxation_product(pm.model, vv[bp], si[bp], wi[bp])
+
+        # this constraint is redudant and useful for debugging
+        #_IM.relaxation_complex_product(pm.model, w[i], w[j], wr[bp], wi[bp])
+   end
+
 end
 
 ""
