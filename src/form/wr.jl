@@ -22,8 +22,9 @@ function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw
     Im_sum_xb = 0.0
     Im_sum_ys = 0.0
 
-    G_ii = 0.01 
-    B_ii = 0.01
+    #   G_ii is the sum of conductances connected to bus i
+    #   B_ii is the sum of susceptances connected to bus i
+    G_ii, B_ii = calc_G_B(pm, bus_id)
     c_i = c[bus_id]
 
     g = 0.0
@@ -35,16 +36,12 @@ function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw
 
         if(bus_1 == bus_id || bus_2 == bus_id)
             # add specific constraints
-            for (id,branch) in ref(pm, nw, :branch)
+            branch_data = ref(pm, nw, :branch, data["branch"])
+            g, b = calc_branch_y(branch_data)
+              
 
-                if(branch["f_bus"] == bus_1 && branch["t_bus"] == bus_2)
-                    g, b = calc_branch_y(branch)
-                end
-
-            end
-
-            g = 0.01
-            b = 0.01
+            #g = 0.01
+            #b = 0.01
             Re_sum_G_B = Re_sum_G_B + (g*cr[pair] - b*ci[pair])
             Im_sum_G_B = Im_sum_G_B + (-b*cr[pair] - g*ci[pair])
 
@@ -82,6 +79,29 @@ function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw
     JuMP.@constraint(pm.model, Im_sum_ys - Im_sum_xb == Im_sum_G_B)
 
 end
+
+# helper method to calculate the sum of conductances G_ii and sum of suceptances B_ii for a node i
+function calc_G_B(pm::AbstractWRModel, bus_id::Int, nw::Int = nw_id_default)
+
+    G_ii = 0.0
+    B_ii = 0.0
+
+    for (tupel, data) in ref(pm, nw, :buspairs)
+        f, t = tupel
+        if f==bus_id || t==bus_id
+            branch_data = ref(pm, nw, :branch, data["branch"])
+            g, b = calc_branch_y(branch_data)
+            G_ii += g
+            B_ii += b
+             
+            
+        end
+    end
+
+    return G_ii, B_ii
+
+end
+
 
 
 

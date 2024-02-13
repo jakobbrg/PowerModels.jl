@@ -41,8 +41,8 @@ function constraint_real_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_
         if f_bus == bus_id
             branch_data = ref(pm, nw, :branch, id)
             g, b = calc_branch_y(branch_data)
-            b = 0.01
-            g = 0.01
+            #b = 0.01
+            #g = 0.01
 
             sum_node = sum_node + (vr[f_bus] * (g*vr[t_bus] - b*vi[t_bus]) + vi[f_bus] * (b*vr[t_bus] + g*vi[t_bus]))
         end

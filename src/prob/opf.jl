@@ -1,5 +1,3 @@
-
-
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
@@ -49,7 +47,6 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     #   ACOPF:
 
-   
 
     # Model ausgeben
     print(pm.model)

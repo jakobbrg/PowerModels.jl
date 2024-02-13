@@ -27,7 +27,7 @@ function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_d
 
     # add variable x_bl consumption of buyer b from bid l
     x_bl = var(pm, nw)[:x_bl] = JuMP.@variable(pm.model,
-        [i in ids(pm, :load), j in keys(ref(pm, :load, 1, "cblocks"))], base_name="$(nw)x_bl",
+        [i in ids(pm, :load), j in keys(first(ref(pm, nw, :load)).second["cblocks"])], base_name="$(nw)x_bl",
         lower_bound = 0)
 
     # add variable y_s generation of seller s
@@ -37,7 +37,7 @@ function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_d
 
     # add variable y_sl generation of seller s from bid l
     y_sl = var(pm, nw)[:y_sl] = JuMP.@variable(pm.model,
-        [i in ids(pm, :gen), j in keys(ref(pm, :gen, 1, "cblocks"))], base_name="$(nw)y_sl",
+        [i in ids(pm, :gen), j in keys(first(ref(pm, nw, :gen)).second["cblocks"])], base_name="$(nw)y_sl",
         lower_bound = 0
     )
 
