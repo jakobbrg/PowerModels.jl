@@ -103,9 +103,12 @@ function calc_G_B(pm::AbstractWRModel, bus_id::Int, nw::Int = nw_id_default)
 end
 
 
+function variable_bus_voltage(pm::SOCWRPowerModel; kwargs...)
+    variable_bus_voltage_magnitude_sqr_bichler(pm; kwargs...)
+    variable_buspair_voltage_product_bichler(pm; kwargs...)
+end
 
 
-""
 function variable_bus_voltage(pm::AbstractWRModel; kwargs...)
     variable_bus_voltage_magnitude_sqr(pm; kwargs...)
     variable_buspair_voltage_product(pm; kwargs...)
@@ -115,6 +118,25 @@ end
 function variable_bus_voltage(pm::AbstractWRConicModel; kwargs...)
     variable_bus_voltage_magnitude_sqr(pm; kwargs...)
     variable_buspair_voltage_product(pm; kwargs...)
+end
+""
+#for the wr models following the bichler formulation of SOC and QC
+function constraint_model_voltage_bichler(pm::AbstractWRModel, n::Int = nw_id_default)
+    _check_missing_keys(var(pm, n), [:w,:wr,:wi], typeof(pm))
+
+    w  = var(pm, n,  :w)
+    wr = var(pm, n, :wr)
+    wi = var(pm, n, :wi)
+
+    for (i,j) in ids(pm, n, :buspairs)
+        relaxation_complex_product_bichler(pm.model, w[i], w[j], wr[(i,j)], wi[(i,j)])
+    end
+
+    # to add the tighter constraints for the QC formulation
+    if isa(pm, QCWRPowerModel)
+        constraint_model_voltage(pm, n)
+    end
+
 end
 
 ""
@@ -508,8 +530,14 @@ function variable_bus_voltage(pm::AbstractQCWRModel; kwargs...)
     variable_bus_voltage_angle(pm; kwargs...)
     variable_bus_voltage_magnitude(pm; kwargs...)
 
+#only for the bichler formulation 
+    variable_bus_voltage_magnitude_sqr_bichler(pm; kwargs...)
+    variable_buspair_voltage_product_bichler(pm; kwargs...)
+
+"""
     variable_bus_voltage_magnitude_sqr(pm; kwargs...)
     variable_buspair_voltage_product(pm; kwargs...)
+"""
 
     variable_buspair_voltage_product_angle(pm; kwargs...)
     variable_buspair_voltage_product_magnitude(pm; kwargs...)
@@ -518,7 +546,7 @@ function variable_bus_voltage(pm::AbstractQCWRModel; kwargs...)
     #variable_buspair_current_magnitude_sqr(pm; kwargs...)
 end
 
-function constraint_model_voltage_bichler(pm::AbstractQCWRModel, n::Int= nw_id_default)
+function constraint_model_voltage_bichler_qc(pm::AbstractQCWRModel, n::Int= nw_id_default)
     _check_missing_keys(var(pm, n), [:vm,:va,:td,:si,:cs,:vv,:w,:wr,:wi], typeof(pm))
 
     v = var(pm, n, :vm)

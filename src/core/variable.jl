@@ -54,7 +54,7 @@ function variable_im_xb_xbl(pm::AbstractPowerModel, nw::Int=nw_id_default, bound
 
     Im_xb = var(pm, nw)[:Im_xb] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :load)], base_name="$(nw)Im_xb",
-        start = comp_start_value(ref(pm, nw, :load, i), "Im_xb_start")
+    
     )
 
    
@@ -189,6 +189,15 @@ function variable_branch_voltage_magnitude_to_on_off(pm::AbstractPowerModel; nw:
     report && sol_component_value(pm, nw, :branch, :vm_to, ids(pm, nw, :branch), vm_to)
 end
 
+# for bichler w, wr and wi not bounded
+function variable_bus_voltage_magnitude_sqr_bichler(pm::AbstractPowerModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+    w = var(pm, nw)[:w] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :bus)], base_name="$(nw)_w"
+    )
+
+    report && sol_component_value(pm, nw, :bus, :w, ids(pm, nw, :bus), w)
+end
+
 
 "variable: `w[i] >= 0` for `i` in `bus`es"
 function variable_bus_voltage_magnitude_sqr(pm::AbstractPowerModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
@@ -285,6 +294,19 @@ function variable_buspair_sine(pm::AbstractPowerModel; nw::Int=nw_id_default, bo
     end
 
     report && sol_component_value_buspair(pm, nw, :buspairs, :si, ids(pm, nw, :buspairs), si)
+end
+
+# for bichler formulati w, wr and wi are not bounded
+function variable_buspair_voltage_product_bichler(pm::AbstractPowerModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+    wr = var(pm, nw)[:wr] = JuMP.@variable(pm.model,
+        [bp in ids(pm, nw, :buspairs)], base_name="$(nw)_wr"
+    )
+    wi = var(pm, nw)[:wi] = JuMP.@variable(pm.model,
+        [bp in ids(pm, nw, :buspairs)], base_name="$(nw)_wi"
+    )
+
+    report && sol_component_value_buspair(pm, nw, :buspairs, :wr, ids(pm, nw, :buspairs), wr)
+    report && sol_component_value_buspair(pm, nw, :buspairs, :wi, ids(pm, nw, :buspairs), wi)
 end
 
 ""

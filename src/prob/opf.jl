@@ -1,7 +1,7 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
-    variable_bus_voltage(pm)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
+    variable_bus_voltage(pm, bounded = false)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
     variable_consumption_generation(pm)     #   All Models: defines x_b, x_bl, y_s, y_sl
     variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/ys) /
     variable_commited(pm)                   #   add u_s variable
@@ -29,15 +29,12 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
     constraint_reactivegeneration_limits(pm) #  holds for AC, SOC, QC, SDP / y_s - u_s*max_Qs <= 0 & y_s - u_s*min_Qs >= 0 for DC does nothing
 
-    if isa(pm, QCRMPowerModel)
-        constraint_model_voltage_bichler(pm)       #   add constraint 9 # holds for DC / sum(y_sl) - sum(x_bl) = sum(-B_ik*(va[i] - va[k])) - sum(-B+ki*(va[k] - va[i]))
-    else
-        constraint_model_voltage(pm)
-    end
+
+    constraint_model_voltage_bichler(pm)      #   add constraint 9 # holds for DC / sum(y_sl) - sum(x_bl) = sum(-B_ik*(va[i] - va[k])) - sum(-B_ki*(va[k] - va[i]))
 
 
-     for i in ids(pm, nw, :bus)
-    # model specific constraints
+    for i in ids(pm, nw, :bus)
+        # model specific constraints
         constraints_model_sepcific(pm, i)
 
     end
@@ -45,7 +42,7 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
     #   explanation for model specific constraints
     #   DCOPF: sets constraints for every node i / va[i] \in  [-pi/2, pi/2] && sum(y_is) - sum(x_is) = sum(-B_ik*(va[i] - va[k])) - sum(-B+ki*(va[k] - va[i]))
 
-    #   ACOPF:
+    #   ACOPF: ...
 
 
     # Model ausgeben

@@ -64,15 +64,15 @@ function constraint_im_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_de
         sum_Im_y_is = 0.0
         sum_Im_x_ib = 0.0
         try
-            sum_y_is = sum(Im_y_s[s] for s in ref(pm, nw, :bus_gens, bus_id))  #  :bus_gens holds every generator at the specific bus with id == bus_id
+            sum_Im_y_is = sum(Im_y_s[s] for s in ref(pm, nw, :bus_gens, bus_id))  #  :bus_gens holds every generator at the specific bus with id == bus_id
         catch
-            sum_y_is = 0
+            sum_Im_y_is = 0
         end
     
         try
-            sum_x_ib = sum(Im_x_b[b] for b in ref(pm, nw, :bus_loads, bus_id)) #   :bus_loads holds every load at the specific load with id == bus_id
+            sum_Im_x_ib = sum(Im_x_b[b] for b in ref(pm, nw, :bus_loads, bus_id)) #   :bus_loads holds every load at the specific load with id == bus_id
         catch
-            sum_x_ib = 0
+            sum_Im_x_ib = 0
         end
     
         #access parameters
@@ -84,8 +84,8 @@ function constraint_im_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_de
             if f_bus == bus_id
                 branch_data = ref(pm, nw, :branch, id)
                 g, b = calc_branch_y(branch_data)
-                b = 0.01
-                g = 0.01
+                #b = 0.01
+                #g = 0.01
     
                 sum_node = sum_node + (vr[f_bus] * (-b*vr[t_bus] - g*vi[t_bus]) + vi[f_bus] * (g*vr[t_bus] - b*vi[t_bus]))
             end
@@ -93,6 +93,16 @@ function constraint_im_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_de
     
         JuMP.@constraint(pm.model, sum_Im_y_is - sum_Im_x_ib - sum_node == 0)
 
+end
+
+#for bichler formulation
+function variable_bus_voltage(pm::ACRPowerModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+    variable_bus_voltage_real(pm; nw=nw, bounded=bounded, kwargs...)
+    variable_bus_voltage_imaginary(pm; nw=nw, bounded=bounded, kwargs...)
+
+        for (i,_) in ref(pm, nw, :bus)
+            constraint_voltage_magnitude_bounds(pm, i, nw=nw)
+        end
 end
 
 ""

@@ -200,6 +200,17 @@ function constraint_inelastic_demand(pm::AbstractPowerModel, nw::Int=nw_id_defau
     end
 
 end
+# to meet the polymorphic style of PowerModels.jl
+function constraint_model_voltage_bichler(pm::AbstractPowerModel)
+    "do nothing most mmodels do not constraint the voltages"
+end
+
+
+"constraint: `c^2 + d^2 <= a*b`"
+function relaxation_complex_product_bichler(m::JuMP.Model, a::JuMP.VariableRef, b::JuMP.VariableRef, c::JuMP.VariableRef, d::JuMP.VariableRef)
+
+    JuMP.@constraint(m, c^2 + d^2 <= a*b)
+end
 
 
 "checks if a sufficient number of variables exist for the given keys collection"

@@ -1,5 +1,4 @@
 # stuff that is universal to all power models
-
 "root of the power formulation type hierarchy"
 abstract type AbstractPowerModel <: _IM.AbstractInfrastructureModel end
 
@@ -31,6 +30,7 @@ function solve_model(data::Dict{String,<:Any}, model_type::Type, optimizer, buil
 
     start_time = time()
     pm = instantiate_model(data, model_type, build_method; ref_extensions=ref_extensions, kwargs...)
+    #return pm
     Memento.debug(_LOGGER, "pm model build time: $(time() - start_time)")
     start_time = time()
     result = optimize_model!(pm, relax_integrality=relax_integrality, optimizer=optimizer, solution_processors=solution_processors)
