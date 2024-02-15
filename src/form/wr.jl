@@ -133,7 +133,7 @@ function constraint_model_voltage_bichler(pm::AbstractWRModel, n::Int = nw_id_de
     end
 
     # to add the tighter constraints for the QC formulation
-    if isa(pm, QCWRPowerModel)
+    if isa(pm, QCRMPowerModel)
         constraint_model_voltage(pm, n)
     end
 
