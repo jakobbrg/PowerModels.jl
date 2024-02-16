@@ -1,7 +1,7 @@
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
-    variable_bus_voltage(pm, bounded = false)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
+    variable_bus_voltage_bichler(pm, bounded = false)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
     variable_consumption_generation(pm)     #   All Models: defines x_b, x_bl, y_s, y_sl
     variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/ys) /
     variable_commited(pm)                   #   add u_s variable

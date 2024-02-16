@@ -103,7 +103,7 @@ function calc_G_B(pm::AbstractWRModel, bus_id::Int, nw::Int = nw_id_default)
 end
 
 
-function variable_bus_voltage(pm::SOCWRPowerModel; kwargs...)
+function variable_bus_voltage_bichler(pm::SOCWRPowerModel; kwargs...)
     variable_bus_voltage_magnitude_sqr_bichler(pm; kwargs...)
     variable_buspair_voltage_product_bichler(pm; kwargs...)
 end
@@ -128,13 +128,14 @@ function constraint_model_voltage_bichler(pm::AbstractWRModel, n::Int = nw_id_de
     wr = var(pm, n, :wr)
     wi = var(pm, n, :wi)
 
-    for (i,j) in ids(pm, n, :buspairs)
-        relaxation_complex_product_bichler(pm.model, w[i], w[j], wr[(i,j)], wi[(i,j)])
-    end
-
     # to add the tighter constraints for the QC formulation
     if isa(pm, QCRMPowerModel)
-        constraint_model_voltage(pm, n)
+        constraint_model_voltage_bichler_qc(pm, n)
+        return
+    end
+    # would be redundant for QC formulation
+    for (i,j) in ids(pm, n, :buspairs)
+        relaxation_complex_product_bichler(pm.model, w[i], w[j], wr[(i,j)], wi[(i,j)])
     end
 
 end
@@ -471,7 +472,7 @@ function variable_buspair_voltage_product_angle(pm::AbstractPowerModel; nw::Int=
         [bp in ids(pm, nw, :buspairs)], base_name="$(nw)_td",
         start = comp_start_value(ref(pm, nw, :buspairs, bp), "td_start")
     )
-
+    bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
             JuMP.set_lower_bound(td[bp], buspair["angmin"])
@@ -489,7 +490,7 @@ function variable_buspair_voltage_product_magnitude(pm::AbstractPowerModel; nw::
         [bp in keys(buspairs)], base_name="$(nw)_vv",
         start = comp_start_value(buspairs[bp], "vv_start", 1.0)
     )
-
+    bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
             JuMP.set_lower_bound(vv[bp], buspair["vm_fr_min"]*buspair["vm_to_min"])
@@ -525,8 +526,7 @@ function variable_buspair_current_magnitude_sqr(pm::AbstractPowerModel; nw::Int=
     report && sol_component_value_buspair(pm, nw, :buspairs, :ccm, ids(pm, nw, :buspairs), ccm)
 end
 
-""
-function variable_bus_voltage(pm::AbstractQCWRModel; kwargs...)
+function variable_bus_voltage_bichler(pm::AbstractQCWRModel; kwargs...)
     variable_bus_voltage_angle(pm; kwargs...)
     variable_bus_voltage_magnitude(pm; kwargs...)
 
@@ -546,6 +546,21 @@ function variable_bus_voltage(pm::AbstractQCWRModel; kwargs...)
     #variable_buspair_current_magnitude_sqr(pm; kwargs...)
 end
 
+""
+function variable_bus_voltage(pm::AbstractQCWRModel; kwargs...)
+    variable_bus_voltage_angle(pm; kwargs...)
+    variable_bus_voltage_magnitude(pm; kwargs...)
+
+    variable_bus_voltage_magnitude_sqr(pm; kwargs...)
+    variable_buspair_voltage_product(pm; kwargs...)
+
+    variable_buspair_voltage_product_angle(pm; kwargs...)
+    variable_buspair_voltage_product_magnitude(pm; kwargs...)
+    variable_buspair_cosine(pm; kwargs...)
+    variable_buspair_sine(pm; kwargs...)
+    variable_buspair_current_magnitude_sqr(pm; kwargs...)
+end
+
 function constraint_model_voltage_bichler_qc(pm::AbstractQCWRModel, n::Int= nw_id_default)
     _check_missing_keys(var(pm, n), [:vm,:va,:td,:si,:cs,:vv,:w,:wr,:wi], typeof(pm))
 
@@ -562,16 +577,16 @@ function constraint_model_voltage_bichler_qc(pm::AbstractQCWRModel, n::Int= nw_i
     wi = var(pm, n, :wi)
 
     for (i,b) in ref(pm, n, :bus)
-        _IM.relaxation_sqr(pm.model, v[i], w[i])
+        _IM.relaxation_sqr(pm.model, v[i], w[i])  # convex envelope Vi^2 # constraint c in |Vi^2|
     end
 
     for bp in ids(pm, n, :buspairs)
         i,j = bp
         JuMP.@constraint(pm.model, t[i] - t[j] == td[bp])
 
-        relaxation_sin(pm.model, td[bp], si[bp])
-        relaxation_cos(pm.model, td[bp], cs[bp])
-        _IM.relaxation_product(pm.model, v[i], v[j], vv[bp])
+        relaxation_sin(pm.model, td[bp], si[bp]) # convex envelope sin
+        relaxation_cos(pm.model, td[bp], cs[bp])    # convex envelope cos
+        _IM.relaxation_product(pm.model, v[i], v[j], vv[bp])  # convex envelope ViVk
         _IM.relaxation_product(pm.model, vv[bp], cs[bp], wr[bp])
         _IM.relaxation_product(pm.model, vv[bp], si[bp], wi[bp])
 
@@ -598,12 +613,12 @@ function constraint_model_voltage(pm::AbstractQCWRModel, n::Int)
     wi = var(pm, n, :wi)
 
     for (i,b) in ref(pm, n, :bus)
-        _IM.relaxation_sqr(pm.model, v[i], w[i])
+        _IM.relaxation_sqr(pm.model, v[i], w[i])#c
     end
 
     for bp in ids(pm, n, :buspairs)
         i,j = bp
-        JuMP.@constraint(pm.model, t[i] - t[j] == td[bp])
+        JuMP.@constraint(pm.model, t[i] - t[j] == td[bp])#c
 
         relaxation_sin(pm.model, td[bp], si[bp])
         relaxation_cos(pm.model, td[bp], cs[bp])

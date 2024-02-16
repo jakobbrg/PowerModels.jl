@@ -111,6 +111,7 @@ function variable_bus_voltage_magnitude(pm::AbstractPowerModel; nw::Int=nw_id_de
         [i in ids(pm, nw, :bus)], base_name="$(nw)_vm",
         start = comp_start_value(ref(pm, nw, :bus, i), "vm_start", 1.0)
     )
+    bounded = true
 
     if bounded
         for (i, bus) in ref(pm, nw, :bus)
@@ -253,7 +254,7 @@ function variable_buspair_cosine(pm::AbstractPowerModel; nw::Int=nw_id_default, 
         [bp in ids(pm, nw, :buspairs)], base_name="$(nw)_cs",
         start = comp_start_value(ref(pm, nw, :buspairs, bp), "cs_start", 1.0)
     )
-
+    bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
             angmin = buspair["angmin"]
@@ -285,7 +286,7 @@ function variable_buspair_sine(pm::AbstractPowerModel; nw::Int=nw_id_default, bo
         [bp in ids(pm, nw, :buspairs)], base_name="$(nw)_si",
         start = comp_start_value(ref(pm, nw, :buspairs, bp), "si_start")
     )
-
+    bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
             JuMP.set_lower_bound(si[bp], sin(buspair["angmin"]))

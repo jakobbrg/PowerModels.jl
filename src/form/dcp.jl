@@ -75,8 +75,10 @@ function constraints_model_sepcific(pm::DCPPowerModel, bus_id::Int, nw::Int=nw_i
 
 
 end
-
-
+# to meet polymorphism
+function variable_bus_voltage_bichler(pm::AbstractDCPModel; kwargs...)
+    variable_bus_voltage(pm; kwargs...)
+end
 
 ""
 function variable_bus_voltage(pm::AbstractDCPModel; kwargs...)

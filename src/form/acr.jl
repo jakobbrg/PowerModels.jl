@@ -96,6 +96,10 @@ function constraint_im_xb_ys(pm::AbstractACRModel, bus_id::Int, nw::Int=nw_id_de
 end
 
 #for bichler formulation
+function variable_bus_voltage_bichler(pm::ACRPowerModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+    variable_bus_voltage(pm; nw=nw, bounded=bounded, kwargs...)
+end
+
 function variable_bus_voltage(pm::ACRPowerModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     variable_bus_voltage_real(pm; nw=nw, bounded=bounded, kwargs...)
     variable_bus_voltage_imaginary(pm; nw=nw, bounded=bounded, kwargs...)
