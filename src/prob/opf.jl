@@ -1,18 +1,24 @@
+
+
 # my additional functions, to meet the formulation of ACOPF, DCOPF, SOC, SDP, QC of solve_opf_bichler
 function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
-    variable_bus_voltage_bichler(pm, bounded = false)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
+    #variables:
     variable_consumption_generation(pm)     #   All Models: defines x_b, x_bl, y_s, y_sl
-    variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/ys) /
     variable_commited(pm)                   #   add u_s variable
-    
-    
-    
+
+    variable_consumption_generation_im(pm)  #   DCP: nothing happens here / AC: add im_(xb/ys) /
+
+
+    variable_bus_voltage_bichler(pm, bounded = false)                #   DCP: defines va / AC: defines re_vi and im_vi and adds constraint V_min^2 <= (vr^2 + vi^2) <= V_max^2
+
+    #objective function
     
     objective_max_welfare(pm)               #   objective function of Bichlers formulations - maximize welfare
 
 
-    
+
+    #constraits:
     constraint_bounds_x_bl(pm)              #   add constraint 1 #holds for every model / 0 <= x_bl <= q_bl / constraint.jl
 
     constraint_inelastic_demand(pm)        #   add constraint 2 # DCOPF, AC, SOC, QC, SDP: sum(x_bl) = x_b 
@@ -30,7 +36,7 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
     constraint_reactivegeneration_limits(pm) #  holds for AC, SOC, QC, SDP / y_s - u_s*max_Qs <= 0 & y_s - u_s*min_Qs >= 0 for DC does nothing
 
 
-    constraint_model_voltage_bichler(pm)      #   add constraint 9 # holds for DC / sum(y_sl) - sum(x_bl) = sum(-B_ik*(va[i] - va[k])) - sum(-B_ki*(va[k] - va[i]))
+    constraint_model_voltage_bichler(pm)      
 
 
     for i in ids(pm, nw, :bus)
@@ -46,7 +52,7 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
 
     # Model ausgeben
-    print(pm.model)
+    #print(pm.model)
     
 end
 

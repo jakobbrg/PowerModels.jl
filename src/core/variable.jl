@@ -9,8 +9,8 @@
 # is called for ACOPF, SOC, QC, SDP
 function variable_consumption_generation_im(pm:: AbstractAlternatingModels, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
     
-    variable_im_xb_xbl(pm)
-    variable_im_ys_ysl(pm)
+    variable_im_xb(pm)
+    variable_im_ys(pm)
 
     
 end
@@ -50,7 +50,7 @@ function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_d
 end
 
 #reactive power consumption
-function variable_im_xb_xbl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+function variable_im_xb(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
 
     Im_xb = var(pm, nw)[:Im_xb] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :load)], base_name="$(nw)Im_xb",
@@ -63,7 +63,7 @@ end
 
 
 #reactive power generation
-function variable_im_ys_ysl(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+function variable_im_ys(pm::AbstractPowerModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
 
     Im_ys = var(pm, nw)[:Im_ys] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :gen)], base_name="$(nw)Im_ys"
@@ -117,6 +117,8 @@ function variable_bus_voltage_magnitude(pm::AbstractPowerModel; nw::Int=nw_id_de
         for (i, bus) in ref(pm, nw, :bus)
             JuMP.set_lower_bound(vm[i], bus["vmin"])
             JuMP.set_upper_bound(vm[i], bus["vmax"])
+            JuMP.set_lower_bound(vm[i], 0.8)
+            JuMP.set_upper_bound(vm[i], 1.2)
         end
     end
 
@@ -257,8 +259,8 @@ function variable_buspair_cosine(pm::AbstractPowerModel; nw::Int=nw_id_default, 
     bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
-            angmin = buspair["angmin"]
-            angmax = buspair["angmax"]
+            angmin = 0 # can change back to buspair["angmin"] && buspair["angmax"]
+            angmax = 1.2
             if angmin >= 0
                 cos_max = cos(angmin)
                 cos_min = cos(angmax)

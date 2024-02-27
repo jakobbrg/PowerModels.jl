@@ -131,7 +131,6 @@ function constraint_model_voltage_bichler(pm::AbstractWRModel, n::Int = nw_id_de
     # to add the tighter constraints for the QC formulation
     if isa(pm, QCRMPowerModel)
         constraint_model_voltage_bichler_qc(pm, n)
-        return
     end
     # would be redundant for QC formulation
     for (i,j) in ids(pm, n, :buspairs)
@@ -477,6 +476,8 @@ function variable_buspair_voltage_product_angle(pm::AbstractPowerModel; nw::Int=
         for (bp, buspair) in ref(pm, nw, :buspairs)
             JuMP.set_lower_bound(td[bp], buspair["angmin"])
             JuMP.set_upper_bound(td[bp], buspair["angmax"])
+            JuMP.set_lower_bound(td[bp], 0)
+            JuMP.set_upper_bound(td[bp], pi/2)
         end
     end
 
