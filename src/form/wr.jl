@@ -474,8 +474,6 @@ function variable_buspair_voltage_product_angle(pm::AbstractPowerModel; nw::Int=
     bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
-            JuMP.set_lower_bound(td[bp], buspair["angmin"])
-            JuMP.set_upper_bound(td[bp], buspair["angmax"])
             JuMP.set_lower_bound(td[bp], 0)
             JuMP.set_upper_bound(td[bp], pi/2)
         end
