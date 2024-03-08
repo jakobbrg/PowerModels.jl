@@ -65,10 +65,7 @@ function constraints_model_sepcific(pm::DCPPowerModel, bus_id::Int, nw::Int=nw_i
         
     end
 
-    println("sum_y_is: ", sum_y_is)
-    println("sum_x_ib: ", sum_x_ib)
-    println("sum_B_ik: ", sum_B_ik)
-    println("sum_B_ki: ", sum_B_ki)
+
     # add constraints
     JuMP.@constraint(pm.model, sum_y_is - sum_x_ib - sum_B_ik + sum_B_ki == 0)
 

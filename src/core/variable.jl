@@ -43,9 +43,11 @@ function variable_consumption_generation(pm::AbstractPowerModel, nw::Int=nw_id_d
 
     report && sol_component_value(pm, nw, :load, :x_b, ids(pm, nw, :load), x_b)
     report && sol_component_value(pm, nw, :gen, :y_s, ids(pm, nw, :gen), y_s)
-    for i in 1:4
+    for i in keys(first(ref(pm, nw, :load)).second["cblocks"])
         report && sol_component_value(pm, nw, :load, Symbol("x_b", i), ids(pm, nw, :load), x_bl[:,i])
-        report && sol_component_value(pm, nw, :gen, Symbol("y_s",i), ids(pm, nw, :gen), y_sl[:, i])
+    end
+    for j in keys(first(ref(pm, nw, :gen)).second["cblocks"])
+        report && sol_component_value(pm, nw, :gen, Symbol("y_s",j), ids(pm, nw, :gen), y_sl[:, j])
     end
 end
 
@@ -117,8 +119,6 @@ function variable_bus_voltage_magnitude(pm::AbstractPowerModel; nw::Int=nw_id_de
         for (i, bus) in ref(pm, nw, :bus)
             JuMP.set_lower_bound(vm[i], bus["vmin"])
             JuMP.set_upper_bound(vm[i], bus["vmax"])
-            JuMP.set_lower_bound(vm[i], 0.8)
-            JuMP.set_upper_bound(vm[i], 1.2)
         end
     end
 
@@ -259,8 +259,8 @@ function variable_buspair_cosine(pm::AbstractPowerModel; nw::Int=nw_id_default, 
     bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
-            angmin = 0 # can change back to buspair["angmin"] && buspair["angmax"]
-            angmax = 1.2
+            angmin = buspair["angmin"] # can change back to buspair["angmin"] && buspair["angmax"]
+            angmax = buspair["angmax"]
             if angmin >= 0
                 cos_max = cos(angmin)
                 cos_min = cos(angmax)

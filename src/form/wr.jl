@@ -1,7 +1,7 @@
 ### quadratic relaxations in the rectangular W-space (e.g. SOC and QC relaxations)
 
 
-# for SOC Model add specific constraints required for formulation of Bichler
+# for SOC and QC Model add specific constraints required for formulation of Bichler
 function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw_id_default)
 
     # access variables
@@ -48,25 +48,25 @@ function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw
         end
     end
     try
-        Re_sum_xb = sum(Re_xb[b] for b in ref(pm, nw, :bus_loads, bus_id))
+        Re_sum_xb = sum(Re_xb[buyer] for buyer in ref(pm, nw, :bus_loads, bus_id))
     catch e
         @warn "No load found for bus $bus_id, but that is okay"
     end
 
     try
-        Re_sum_ys = sum(Re_ys[b] for b in ref(pm, nw, :bus_gens, bus_id))
+        Re_sum_ys = sum(Re_ys[seller] for seller in ref(pm, nw, :bus_gens, bus_id))
     catch e
         @warn "No generator found for bus $bus_id, but that is okay"
     end
 
     try
-        Im_sum_xb = sum(Im_xb[b] for b in ref(pm, nw, :bus_loads, bus_id))
+        Im_sum_xb = sum(Im_xb[buyer] for buyer in ref(pm, nw, :bus_loads, bus_id))
     catch e
         @warn "No load found for bus $bus_id, but that is okay"
     end
 
     try
-        Im_sum_ys = sum(Im_ys[b] for b in ref(pm, nw, :bus_gens, bus_id))
+        Im_sum_ys = sum(Im_ys[seller] for seller in ref(pm, nw, :bus_gens, bus_id))
     catch e
         @warn "No generator found for bus $bus_id, but that is okay"
     end
@@ -131,8 +131,9 @@ function constraint_model_voltage_bichler(pm::AbstractWRModel, n::Int = nw_id_de
     # to add the tighter constraints for the QC formulation
     if isa(pm, QCRMPowerModel)
         constraint_model_voltage_bichler_qc(pm, n)
+        return
     end
-    # would be redundant for QC formulation
+    
     for (i,j) in ids(pm, n, :buspairs)
         relaxation_complex_product_bichler(pm.model, w[i], w[j], wr[(i,j)], wi[(i,j)])
     end
@@ -474,8 +475,8 @@ function variable_buspair_voltage_product_angle(pm::AbstractPowerModel; nw::Int=
     bounded = true
     if bounded
         for (bp, buspair) in ref(pm, nw, :buspairs)
-            JuMP.set_lower_bound(td[bp], 0)
-            JuMP.set_upper_bound(td[bp], pi/2)
+            JuMP.set_lower_bound(td[bp], buspair["angmin"])
+            JuMP.set_upper_bound(td[bp], buspair["angmax"])
         end
     end
 
@@ -679,11 +680,11 @@ function constraint_voltage_angle_difference(pm::AbstractQCWRModel, n::Int, f_id
     td = var(pm, n, :td, (f_bus, t_bus))
 
     if JuMP.lower_bound(td) < angmin
-        set_lower_bound(td, angmin)
+        JuMP.set_lower_bound(td, angmin)
     end
 
     if JuMP.upper_bound(td) > angmax
-        set_upper_bound(td, angmax)
+        JuMP.set_upper_bound(td, angmax)
     end
 
     w_fr = var(pm, n, :w, f_bus)
