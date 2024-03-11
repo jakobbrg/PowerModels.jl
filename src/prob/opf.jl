@@ -52,7 +52,7 @@ function build_opf_bichler(pm::AbstractPowerModel, nw::Int=nw_id_default)
 
 
     # Model ausgeben
-    #print(pm.model)
+    print(pm.model)
     
 end
 

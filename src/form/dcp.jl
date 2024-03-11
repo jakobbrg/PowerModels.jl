@@ -29,10 +29,6 @@ function constraints_model_sepcific(pm::DCPPowerModel, bus_id::Int, nw::Int=nw_i
     x_b = var(pm, nw, :x_b)
     va = var(pm, nw, :va)
 
-    for i in ids(pm, nw, :bus)
-        JuMP.@constraint(pm.model, va[i] <= pi/2)
-        JuMP.@constraint(pm.model, va[i] >= -pi/2)
-    end
     sum_y_is = 0.0
     sum_x_ib = 0.0
     try
@@ -55,8 +51,8 @@ function constraints_model_sepcific(pm::DCPPowerModel, bus_id::Int, nw::Int=nw_i
 
         if (f_bus == bus_id)
             branch_data = ref(pm, nw, :branch, id)
-            g, b = calc_branch_y(branch_data)
-            #b = 0.01    # for testin
+            #g, b = calc_branch_y(branch_data)
+            b = 0.01    # for testin
 
             sum_B_ik = sum_B_ik + (-b*(va[f_bus] - va[t_bus]))
             sum_B_ki = sum_B_ki + (-b*(va[t_bus] - va[f_bus]))

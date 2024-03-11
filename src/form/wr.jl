@@ -42,8 +42,14 @@ function constraints_model_sepcific(pm::AbstractWRModel, bus_id::Int, nw::Int=nw
 
             #g = 0.01
             #b = 0.01
-            Re_sum_G_B = Re_sum_G_B + (g*cr[pair] - b*ci[pair])
-            Im_sum_G_B = Im_sum_G_B + (-b*cr[pair] - g*ci[pair])
+            if(bus_1 == bus_id)
+                Re_sum_G_B = Re_sum_G_B + (g*cr[pair] - b*ci[pair])
+                Im_sum_G_B = Im_sum_G_B + (-b*cr[pair] - g*ci[pair])
+            else
+                Re_sum_G_B = Re_sum_G_B + (g*cr[pair] - b*(-ci[pair]))
+                Im_sum_G_B = Im_sum_G_B + (-b*cr[pair] - g*(-ci[pair]))
+            end
+        
 
         end
     end

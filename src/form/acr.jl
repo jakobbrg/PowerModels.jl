@@ -103,10 +103,11 @@ end
 function variable_bus_voltage(pm::ACRPowerModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     variable_bus_voltage_real(pm; nw=nw, bounded=bounded, kwargs...)
     variable_bus_voltage_imaginary(pm; nw=nw, bounded=bounded, kwargs...)
-
-        for (i,_) in ref(pm, nw, :bus)
-            constraint_voltage_magnitude_bounds(pm, i, nw=nw)
-        end
+    """
+    for (i,bus) in ref(pm, nw, :bus)
+        constraint_voltage_magnitude_bounds(pm, i, nw=nw)
+    end
+    """
 end
 
 ""

@@ -18,6 +18,7 @@ function constraint_activegeneration_limits(pm::AbstractPowerModel, nw::Int=nw_i
 
     for s in ids(pm, nw, :gen)
         min_Ps = ref(pm, nw, :gen, s, "pmin")
+        min_Ps = 0.0
         max_Ps = ref(pm, nw, :gen, s, "pmax")
         JuMP.@constraint(pm.model, min_Ps*u_s[s] <= y_s[s])
         JuMP.@constraint(pm.model, y_s[s] <= max_Ps*u_s[s])
